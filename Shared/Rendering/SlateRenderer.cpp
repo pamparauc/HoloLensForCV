@@ -66,12 +66,13 @@ namespace Rendering
         // Note that this transform does not enforce a particular coordinate system. The calling
         // class is responsible for rendering this content in a consistent manner.
         const DirectX::XMMATRIX modelTransform = XMMatrixMultiply(modelRotation, modelTranslation);
+		DirectX::XMMATRIX scale = DirectX::XMMatrixScaling(1.5f, 1.5f, 1.0f);
 
         // The view and projection matrices are provided by the system; they are associated
         // with holographic cameras, and updated on a per-camera basis.
         // Here, we provide the model transform for the sample hologram. The model transform
         // matrix is transposed to prepare it for the shader.
-        XMStoreFloat4x4(&_modelConstantBufferData.model, DirectX::XMMatrixTranspose(modelTransform));
+        XMStoreFloat4x4(&_modelConstantBufferData.model, DirectX::XMMatrixTranspose(modelTransform*scale));
 
         // Loading is asynchronous. Resources must be created before they can be updated.
         if (!_loadingComplete)
