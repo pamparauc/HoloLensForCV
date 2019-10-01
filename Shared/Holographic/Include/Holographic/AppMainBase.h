@@ -74,6 +74,12 @@ namespace Holographic
         // Spatial perception object shared with the HoloLensForCV components.
         HoloLensForCV::SpatialPerception^ _spatialPerception;
 
+		// SpatialLocator that is attached to the primary camera.
+		Windows::Perception::Spatial::SpatialLocator^                   m_locator;
+
+		// A reference frame attached to the holographic camera.
+		Windows::Perception::Spatial::SpatialLocatorAttachedFrameOfReference^ m_referenceFrame;
+
         // Optional focus point.
         bool _hasFocusPoint{ false };
         Windows::Foundation::Numerics::float3 _optionalFocusPoint;

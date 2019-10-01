@@ -48,6 +48,9 @@ namespace Holographic
 
         _holographicSpace = holographicSpace;
 
+		// Use the default SpatialLocator to track the motion of the device.
+		m_locator = SpatialLocator::GetDefault();
+
         //
         // In this sample, we will defer to the HoloLensForCV component for spatial perception.
         //
@@ -88,6 +91,11 @@ namespace Holographic
                         this,
                         std::placeholders::_1,
                         std::placeholders::_2));
+
+		// The simplest way to render world-locked holograms is to create a stationary reference frame
+	// when the app is launched. This is roughly analogous to creating a "world" coordinate system
+	// with the origin placed at the device's position as the app is launched.
+		m_referenceFrame = m_locator->CreateAttachedFrameOfReferenceAtCurrentHeading();
 
         OnHolographicSpaceChanged(
             holographicSpace);
@@ -138,6 +146,9 @@ namespace Holographic
         // resource views and depth buffers as needed.
         _deviceResources->EnsureCameraResources(holographicFrame, prediction);
 
+		SpatialCoordinateSystem^ currentCoordinateSystem = m_referenceFrame->GetStationaryCoordinateSystemAtTimestamp(prediction->Timestamp);
+		SpatialPointerPose^ pointerPose = SpatialPointerPose::TryGetAtTimestamp(currentCoordinateSystem, prediction->Timestamp);
+
         //
         // Check for new input state since the last frame.
         //
@@ -157,7 +168,7 @@ namespace Holographic
             // but if you change the StepTimer to use a fixed time step this code will
             // run as many times as needed to get to the current step.
             //
-            OnUpdate(
+            OnUpdate(pointerPose, float3{ 0.f, 0.f,  -1.0f },
                 holographicFrame,
                 _timer);
         });

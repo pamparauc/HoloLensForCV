@@ -64,10 +64,12 @@ namespace ComputeOnDevice
         }
     }
 
-    void AppMain::OnUpdate(
+    void AppMain::OnUpdate(Windows::UI::Input::Spatial::SpatialPointerPose^ pointerPose,
+		Windows::Foundation::Numerics::float3 const& offset,
         _In_ Windows::Graphics::Holographic::HolographicFrame^ holographicFrame,
         _In_ const Graphics::StepTimer& stepTimer)
     {
+
         UNREFERENCED_PARAMETER(holographicFrame);
 
         dbg::TimerGuard timerGuard(
@@ -84,7 +86,7 @@ namespace ComputeOnDevice
         
         for (auto& r : _slateRendererList)
         {
-            r->Update(
+            r->Update(pointerPose, offset,
                 stepTimer);
         }
         
@@ -224,12 +226,12 @@ namespace ComputeOnDevice
     void AppMain::OnRender()
     {
         // Draw the sample hologram.
-        for (size_t i = 0; i < _visualizationTextureList.size(); ++i)
-        {
-            _slateRendererList[i]->Render(
-                _visualizationTextureList[i]);
-        }
-        
+        //for (size_t i = 0; i < _visualizationTextureList.size(); ++i)
+        //{
+        //    _slateRendererList[i]->Render(
+        //        _visualizationTextureList[i]);
+        //}
+        //
         if (_isActiveRenderer)
         {
             _currentSlateRenderer->Render(_currentVisualizationTexture);

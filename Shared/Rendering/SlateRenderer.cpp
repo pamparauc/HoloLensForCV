@@ -10,7 +10,7 @@
 //*********************************************************
 
 #include "pch.h"
-
+using Windows::Foundation::Numerics::float3;
 namespace Rendering
 {
     // Loads vertex and pixel shaders from files and instantiates the cube geometry.
@@ -51,48 +51,105 @@ namespace Rendering
 
     // Called once per frame. Rotates the cube, and calculates and sets the model matrix
     // relative to the position transform indicated by hologramPositionTransform.
-    void SlateRenderer::Update(
-        _In_ const Graphics::StepTimer& /* timer */)
+    void SlateRenderer::Update(Windows::UI::Input::Spatial::SpatialPointerPose^ pointerPose,
+		Windows::Foundation::Numerics::float3 const& offset,
+        _In_ const Graphics::StepTimer&  timer )
     {
-        // Rotate the cube.
-        // Convert degrees to radians, then convert seconds to rotation angle.
-        const float    radians = static_cast<float>(fmod(_rotationInRadians, DirectX::XM_2PI));
-        const DirectX::XMMATRIX modelRotation = DirectX::XMMatrixRotationY(-radians);
+		if (pointerPose != nullptr)
+		{
 
-        // Position the cube.
-        const DirectX::XMMATRIX modelTranslation = DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&_position));
+			float const deltaTime = static_cast<float>(timer.GetElapsedSeconds());
+			float const lerpDeltaTime = deltaTime * c_lerpRate;
 
-        // Multiply to get the transform matrix.
-        // Note that this transform does not enforce a particular coordinate system. The calling
-        // class is responsible for rendering this content in a consistent manner.
-        const DirectX::XMMATRIX modelTransform = XMMatrixMultiply(modelRotation, modelTranslation);
-		DirectX::XMMATRIX scale = DirectX::XMMatrixScaling(1.5f, 1.5f, 1.0f);
+			//// Get the gaze direction relative to the given coordinate system.
+			//float3 const headPosition = pointerPose->Head->Position;
+			//float3 const headForward = pointerPose->Head->ForwardDirection;
+			//float3 const headBack = -headForward;
+			//float3 const headUp = pointerPose->Head->UpDirection;
+			//float3 const headRight = cross(headForward, headUp);
 
-        // The view and projection matrices are provided by the system; they are associated
-        // with holographic cameras, and updated on a per-camera basis.
-        // Here, we provide the model transform for the sample hologram. The model transform
-        // matrix is transposed to prepare it for the shader.
-        XMStoreFloat4x4(&_modelConstantBufferData.model, DirectX::XMMatrixTranspose(modelTransform*scale));
+			//m_targetPosition = headPosition + (headRight * offset.x) + (headUp * offset.y) + (headBack * offset.z);
+			//float3 const prevPosition = _position;
+			//_position = lerp(_position, m_targetPosition, lerpDeltaTime);
 
-        // Loading is asynchronous. Resources must be created before they can be updated.
-        if (!_loadingComplete)
-        {
-            return;
-        }
+			//m_velocity = (_position - prevPosition) / deltaTime;
 
-        // Use the D3D device context to update Direct3D device-based resources.
-        const auto context = _deviceResources->GetD3DDeviceContext();
+			//m_normal = normalize(-_position);
 
-        // Update the model transform buffer for the hologram.
-        context->UpdateSubresource(
-            _modelConstantBuffer.Get(),
-            0,
-            nullptr,
-            &_modelConstantBufferData,
-            0,
-            0
-        );
+
+
+			// Get the gaze direction relative to the given coordinate system.
+			const float3 headPosition = pointerPose->Head->Position;
+			const float3 headDirection = pointerPose->Head->ForwardDirection;
+
+			// The hologram is positioned two meters along the user's gaze direction.
+			constexpr float distanceFromUser = 2.00f; // meters
+			const float3 gazeAtTwoMeters = headPosition + (distanceFromUser * headDirection);
+			_position = gazeAtTwoMeters;
+			// The hologram is rotated towards the user
+			_rotationInRadians = std::atan2(
+				headDirection.z,
+				headDirection.x) + DirectX::XM_PIDIV2;
+
+			// Calculate our model to world matrix relative to the user's head.
+			//DirectX::XMMATRIX model_transform = maxe_float4x4_world(_position, -m_normal, headUp);
+
+			// Rotate the cube.
+			// Convert degrees to radians, then convert seconds to rotation angle.
+			const float    radians = static_cast<float>(fmod(_rotationInRadians, DirectX::XM_2PI));
+			const DirectX::XMMATRIX modelRotation = DirectX::XMMatrixRotationY(-radians);
+
+			// Position the cube.
+			const DirectX::XMMATRIX modelTranslation = DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&_position));
+
+			// Multiply to get the transform matrix.
+		// Note that this transform does not enforce a particular coordinate system. The calling
+		// class is responsible for rendering this content in a consistent manner.
+			const DirectX::XMMATRIX modelTransform = XMMatrixMultiply(modelRotation, modelTranslation);
+			DirectX::XMMATRIX scale = DirectX::XMMatrixScaling(1.0f, 1.0f, 1.50f);
+
+			// The view and projection matrices are provided by the system; they are associated
+			// with holographic cameras, and updated on a per-camera basis.
+			// Here, we provide the model transform for the sample hologram. The model transform
+			// matrix is transposed to prepare it for the shader.
+			XMStoreFloat4x4(&_modelConstantBufferData.model, DirectX::XMMatrixTranspose(modelTransform*scale));
+
+			// Loading is asynchronous. Resources must be created before they can be updated.
+			if (!_loadingComplete)
+			{
+				return;
+			}
+
+			// Use the D3D device context to update Direct3D device-based resources.
+			const auto context = _deviceResources->GetD3DDeviceContext();
+
+			// Update the model transform buffer for the hologram.
+			context->UpdateSubresource(
+				_modelConstantBuffer.Get(),
+				0,
+				nullptr,
+				&_modelConstantBufferData,
+				0,
+				0
+			);
+		}
+		
+
+        
     }
+
+	DirectX::XMMATRIX SlateRenderer::maxe_float4x4_world(float3 const& position, float3 const& forward, float3 const& up)
+	{
+		float3 zaxis = normalize(-forward);
+		float3 xaxis = normalize(cross(up, zaxis));
+		float3 yaxis = cross(zaxis, xaxis);
+
+		return DirectX::XMMATRIX(xaxis.x, xaxis.y, xaxis.z, 0,
+			yaxis.x, yaxis.y, yaxis.z, 0,
+			zaxis.x, zaxis.y, zaxis.z, 0,
+			position.x, position.y, position.z, 1);
+	//	return model_transform;
+	}
 
     // Renders one frame using the vertex and pixel shaders.
     // On devices that do not support the D3D11_FEATURE_D3D11_OPTIONS3::
