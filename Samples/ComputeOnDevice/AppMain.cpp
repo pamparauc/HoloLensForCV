@@ -34,6 +34,17 @@ namespace ComputeOnDevice
         //
         StartHoloLensMediaFrameSourceGroup();
     }
+	void AppMain::InitDisplay()
+	{
+		if (!_isActiveRenderer)
+		{
+			_currentSlateRenderer =
+				std::make_shared<Rendering::SlateRenderer>(
+					_deviceResources);
+			_slateRendererList.push_back(_currentSlateRenderer);
+			_isActiveRenderer = true;
+		}
+	}
 
     void AppMain::OnSpatialInput(
         _In_ Windows::UI::Input::Spatial::SpatialInteractionSourceState^ pointerState)

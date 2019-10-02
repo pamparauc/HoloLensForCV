@@ -29,5 +29,7 @@ namespace Holographic
         virtual void OnPreRender() = 0;
 
         virtual void OnRender() = 0;
+
+		virtual void InitDisplay() = 0;
     };
 }

@@ -40,6 +40,8 @@ namespace ComputeOnDevice
 
         virtual void OnRender() override;
 
+		virtual void InitDisplay() override;
+
     private:
         // Initializes access to HoloLens sensors.
         void StartHoloLensMediaFrameSourceGroup();

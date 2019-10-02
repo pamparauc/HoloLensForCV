@@ -99,6 +99,8 @@ namespace Holographic
 
         OnHolographicSpaceChanged(
             holographicSpace);
+
+		InitDisplay();
     }
 
     void AppMainBase::UnregisterHolographicEventHandlers()
@@ -152,14 +154,15 @@ namespace Holographic
         //
         // Check for new input state since the last frame.
         //
-        SpatialInteractionSourceState^ pointerState =
-            _spatialInputHandler->CheckForInput();
+        //SpatialInteractionSourceState^ pointerState =
+        //    _spatialInputHandler->CheckForInput();
 
-        if (pointerState != nullptr)
-        {
-            OnSpatialInput(
-                pointerState);
-        }
+        //if (pointerState != nullptr)
+        //{
+        //    OnSpatialInput(
+        //        pointerState);
+        //}
+
 
         _timer.Tick([&]()
         {
