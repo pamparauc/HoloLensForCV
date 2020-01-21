@@ -62,42 +62,42 @@ namespace Rendering
 			float const lerpDeltaTime = deltaTime * c_lerpRate;
 
 			//// Get the gaze direction relative to the given coordinate system.
-			//float3 const headPosition = pointerPose->Head->Position;
-			//float3 const headForward = pointerPose->Head->ForwardDirection;
-			//float3 const headBack = -headForward;
-			//float3 const headUp = pointerPose->Head->UpDirection;
-			//float3 const headRight = cross(headForward, headUp);
+			float3 const headPosition = pointerPose->Head->Position;
+			float3 const headForward = pointerPose->Head->ForwardDirection;
+			float3 const headBack = -headForward;
+			float3 const headUp = pointerPose->Head->UpDirection;
+			float3 const headRight = cross(headForward, headUp);
 
-			//m_targetPosition = headPosition + (headRight * offset.x) + (headUp * offset.y) + (headBack * offset.z);
-			//float3 const prevPosition = _position;
-			//_position = lerp(_position, m_targetPosition, lerpDeltaTime);
+			m_targetPosition = headPosition + (headRight * offset.x) + (headUp * offset.y) + (headBack * offset.z);
+			float3 const prevPosition = _position;
+			_position = lerp(_position, m_targetPosition, lerpDeltaTime);
 
-			//m_velocity = (_position - prevPosition) / deltaTime;
+			m_velocity = (_position - prevPosition) / deltaTime;
 
-			//m_normal = normalize(-_position);
+			m_normal = normalize(-_position);
 
 
 
-			// Get the gaze direction relative to the given coordinate system.
-			const float3 headPosition = pointerPose->Head->Position;
-			const float3 headDirection = pointerPose->Head->ForwardDirection;
+			//// Get the gaze direction relative to the given coordinate system.
+			//const float3 headPosition = pointerPose->Head->Position;
+			//const float3 headDirection = pointerPose->Head->ForwardDirection;
 
-			// The hologram is positioned two meters along the user's gaze direction.
-			constexpr float distanceFromUser = 2.00f; // meters
-			const float3 gazeAtTwoMeters = headPosition + (distanceFromUser * headDirection);
-			_position = gazeAtTwoMeters;
-			// The hologram is rotated towards the user
-			_rotationInRadians = std::atan2(
-				headDirection.z,
-				headDirection.x) + DirectX::XM_PIDIV2;
+			//// The hologram is positioned two meters along the user's gaze direction.
+			//constexpr float distanceFromUser = 2.00f; // meters
+			//const float3 gazeAtTwoMeters = headPosition + (distanceFromUser * headDirection);
+			//_position = gazeAtTwoMeters;
+			//// The hologram is rotated towards the user
+			//_rotationInRadians = std::atan2(
+			//	headDirection.z,
+			//	headDirection.x) + DirectX::XM_PIDIV2;
 
 			// Calculate our model to world matrix relative to the user's head.
-			//DirectX::XMMATRIX model_transform = maxe_float4x4_world(_position, -m_normal, headUp);
+			DirectX::XMMATRIX model_transform = maxe_float4x4_world(_position, -m_normal, headUp);
 
 			// Rotate the cube.
 			// Convert degrees to radians, then convert seconds to rotation angle.
-			const float    radians = static_cast<float>(fmod(_rotationInRadians, DirectX::XM_2PI));
-			const DirectX::XMMATRIX modelRotation = DirectX::XMMatrixRotationY(-radians);
+			//const float    radians = static_cast<float>(fmod(_rotationInRadians, DirectX::XM_2PI));
+			//const DirectX::XMMATRIX modelRotation = DirectX::XMMatrixRotationY(-radians);
 
 			// Position the cube.
 			const DirectX::XMMATRIX modelTranslation = DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&_position));
@@ -105,14 +105,14 @@ namespace Rendering
 			// Multiply to get the transform matrix.
 		// Note that this transform does not enforce a particular coordinate system. The calling
 		// class is responsible for rendering this content in a consistent manner.
-			const DirectX::XMMATRIX modelTransform = XMMatrixMultiply(modelRotation, modelTranslation);
-			DirectX::XMMATRIX scale = DirectX::XMMatrixScaling(1.0f, 1.0f, 1.50f);
+			//const DirectX::XMMATRIX modelTransform = XMMatrixMultiply(modelRotation, modelTranslation);
+			//DirectX::XMMATRIX scale = DirectX::XMMatrixScaling(1.0f, 1.0f, 1.00f);
 
 			// The view and projection matrices are provided by the system; they are associated
 			// with holographic cameras, and updated on a per-camera basis.
 			// Here, we provide the model transform for the sample hologram. The model transform
 			// matrix is transposed to prepare it for the shader.
-			XMStoreFloat4x4(&_modelConstantBufferData.model, DirectX::XMMatrixTranspose(modelTransform*scale));
+			XMStoreFloat4x4(&_modelConstantBufferData.model, DirectX::XMMatrixTranspose(model_transform));
 
 			// Loading is asynchronous. Resources must be created before they can be updated.
 			if (!_loadingComplete)

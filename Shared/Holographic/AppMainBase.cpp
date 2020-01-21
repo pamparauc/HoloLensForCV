@@ -151,18 +151,6 @@ namespace Holographic
 		SpatialCoordinateSystem^ currentCoordinateSystem = m_referenceFrame->GetStationaryCoordinateSystemAtTimestamp(prediction->Timestamp);
 		SpatialPointerPose^ pointerPose = SpatialPointerPose::TryGetAtTimestamp(currentCoordinateSystem, prediction->Timestamp);
 
-        //
-        // Check for new input state since the last frame.
-        //
-        //SpatialInteractionSourceState^ pointerState =
-        //    _spatialInputHandler->CheckForInput();
-
-        //if (pointerState != nullptr)
-        //{
-        //    OnSpatialInput(
-        //        pointerState);
-        //}
-
 
         _timer.Tick([&]()
         {
@@ -171,7 +159,7 @@ namespace Holographic
             // but if you change the StepTimer to use a fixed time step this code will
             // run as many times as needed to get to the current step.
             //
-            OnUpdate(pointerPose, float3{ 0.f, 0.f,  -1.0f },
+            OnUpdate(pointerPose, float3{ 0.0f, 0.0f, -2.15f },
                 holographicFrame,
                 _timer);
         });

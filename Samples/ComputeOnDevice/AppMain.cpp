@@ -46,35 +46,6 @@ namespace ComputeOnDevice
 		}
 	}
 
-    void AppMain::OnSpatialInput(
-        _In_ Windows::UI::Input::Spatial::SpatialInteractionSourceState^ pointerState)
-    {
-        Windows::Perception::Spatial::SpatialCoordinateSystem^ currentCoordinateSystem =
-            _spatialPerception->GetOriginFrameOfReference()->CoordinateSystem;
-
-        if (!_isActiveRenderer)
-        {
-            _currentSlateRenderer =
-                std::make_shared<Rendering::SlateRenderer>(
-                    _deviceResources);
-            _slateRendererList.push_back(_currentSlateRenderer);
-
-            // When a Pressed gesture is detected, the sample hologram will be repositioned
-            // two meters in front of the user.
-            _currentSlateRenderer->PositionHologram(
-                pointerState->TryGetPointerPose(currentCoordinateSystem));
-
-            _isActiveRenderer = true;
-        }
-        else
-        {
-            // Freeze frame
-            _visualizationTextureList.push_back(_currentVisualizationTexture);
-            _currentVisualizationTexture = nullptr;
-            _isActiveRenderer = false;
-        }
-    }
-
     void AppMain::OnUpdate(Windows::UI::Input::Spatial::SpatialPointerPose^ pointerPose,
 		Windows::Foundation::Numerics::float3 const& offset,
         _In_ Windows::Graphics::Holographic::HolographicFrame^ holographicFrame,
@@ -224,7 +195,7 @@ namespace ComputeOnDevice
 
         OpenCVHelpers::CreateOrUpdateTexture2D(
             _deviceResources,
-            _blurredPVCameraImage,
+			_blurredPVCameraImage,
             _currentVisualizationTexture);
     }
 

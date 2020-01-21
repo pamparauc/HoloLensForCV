@@ -28,9 +28,6 @@ namespace ComputeOnDevice
         virtual void OnHolographicSpaceChanged(
             _In_ Windows::Graphics::Holographic::HolographicSpace^ holographicSpace) override;
 
-        virtual void OnSpatialInput(
-            _In_ Windows::UI::Input::Spatial::SpatialInteractionSourceState^ pointerState) override;
-
         virtual void OnUpdate(Windows::UI::Input::Spatial::SpatialPointerPose^ pointerPose,
 			Windows::Foundation::Numerics::float3 const& offset,
             _In_ Windows::Graphics::Holographic::HolographicFrame^ holographicFrame,

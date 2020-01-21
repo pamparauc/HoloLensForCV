@@ -18,9 +18,6 @@ namespace Holographic
         virtual void OnHolographicSpaceChanged(
             Windows::Graphics::Holographic::HolographicSpace^ holographicSpace) = 0;
 
-        virtual void OnSpatialInput(
-            Windows::UI::Input::Spatial::SpatialInteractionSourceState^ pointerState) = 0;
-
         virtual void OnUpdate(Windows::UI::Input::Spatial::SpatialPointerPose^ pointerPose,
 			Windows::Foundation::Numerics::float3 const& offset,
             _In_ _In_ Windows::Graphics::Holographic::HolographicFrame^ holographicFrame,
