@@ -10,6 +10,10 @@
 //*********************************************************
 
 #pragma once
+#include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/objdetect/objdetect.hpp"
 
 namespace ComputeOnDevice
 {
@@ -38,11 +42,11 @@ namespace ComputeOnDevice
         virtual void OnRender() override;
 
 		virtual void InitDisplay() override;
-
+		
     private:
         // Initializes access to HoloLens sensors.
         void StartHoloLensMediaFrameSourceGroup();
-
+		
     private:
         std::vector<std::shared_ptr<Rendering::SlateRenderer> >_slateRendererList;
         std::shared_ptr<Rendering::SlateRenderer> _currentSlateRenderer;
@@ -70,5 +74,13 @@ namespace ComputeOnDevice
         Rendering::Texture2DPtr _currentVisualizationTexture;
 
         bool _isActiveRenderer;
+
+		void redToBlue(cv::Mat& Image);
+		void Canny(cv::Mat& original, cv::Mat& blurred, cv::Mat& canny);
+
+		void FaceDetection(cv::Mat& input);
+
+		void detectFaceOpenCVHaar(cv::CascadeClassifier faceCascade, cv::Mat &frameOpenCVHaar, int inHeight = 300, int inWidth = 0);
+	
     };
 }

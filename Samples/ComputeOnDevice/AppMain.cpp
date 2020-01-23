@@ -12,7 +12,9 @@
 #include "pch.h"
 
 #include "AppMain.h"
+#include <opencv2/imgproc/imgproc.hpp>
 
+using namespace cv;
 namespace ComputeOnDevice
 {
     AppMain::AppMain(
@@ -171,31 +173,21 @@ namespace ComputeOnDevice
                 cv::INTER_AREA);
         }
 
-        cv::medianBlur(
-            _resizedPVCameraImage,
-            _blurredPVCameraImage,
-            3 /* ksize */);
-
-        cv::Canny(
-            _blurredPVCameraImage,
-            _cannyPVCameraImage,
-            50.0,
-            200.0);
-
-        for (int32_t y = 0; y < _blurredPVCameraImage.rows; ++y)
-        {
-            for (int32_t x = 0; x < _blurredPVCameraImage.cols; ++x)
-            {
-                if (_cannyPVCameraImage.at<uint8_t>(y, x) > 64)
-                {
-                    *(_blurredPVCameraImage.ptr<uint32_t>(y, x)) = 0xFFFF00FF;
-                }
-            }
-        }
+		
+		//redToBlue(_resizedPVCameraImage);
+		
+		//cv::Mat laplacian;
+		//cv::Laplacian(_resizedPVCameraImage, laplacian, 0, 1);
+		
+		//Canny(_resizedPVCameraImage, _blurredPVCameraImage, _cannyPVCameraImage);
+		
+		
+		//CascadeClassifier faceCascade;
+		//detectFaceOpenCVHaar(faceCascade, _resizedPVCameraImage);
 
         OpenCVHelpers::CreateOrUpdateTexture2D(
             _deviceResources,
-			_blurredPVCameraImage,
+			_resizedPVCameraImage,   // muchii peste red->blue
             _currentVisualizationTexture);
     }
 
@@ -274,4 +266,68 @@ namespace ComputeOnDevice
             _holoLensMediaFrameSourceGroupStarted = true;
         });
     }
+
+	// imageProcessing
+
+	void AppMain::redToBlue(cv::Mat& Image)
+	{
+		cv::Mat hsv;
+		cv::cvtColor(Image, hsv, cv::COLOR_RGB2HSV);
+		Mat mask1;
+		// Creating masks to detect the upper and lower blue color.
+		inRange(hsv, Scalar(110, 50, 50), Scalar(130, 255, 255), mask1);
+		Image.setTo(Scalar(255, 0, 0), mask1);
+	}
+
+	void AppMain::Canny(cv::Mat& original, cv::Mat& blurred, cv::Mat& canny)
+	{
+		cv::medianBlur(
+			original, // _resizedPVCameraImage
+			blurred,// _blurredPVCameraImage
+			3 /* ksize */);
+
+		cv::Canny(
+			blurred, // _blurredPVCameraImage
+			canny, // _cannyPVCameraImage
+			50.0,
+			200.0);
+
+		for (int32_t y = 0; y < blurred.rows; ++y)
+		{
+			for (int32_t x = 0; x < blurred.cols; ++x)
+			{
+				if (canny.at<uint8_t>(y, x) > 64)
+				{
+					*(blurred.ptr<uint32_t>(y, x)) = 0xCD0000;
+				}
+			}
+		}
+	}
+
+	void AppMain::detectFaceOpenCVHaar(cv::CascadeClassifier faceCascade, cv::Mat &frameOpenCVHaar, int inHeight, int inWidth)
+	{
+		int frameHeight = frameOpenCVHaar.rows;
+		int frameWidth = frameOpenCVHaar.cols;
+		if (!inWidth)
+			inWidth = (int)((frameWidth / (float)frameHeight) * inHeight);
+
+		float scaleHeight = frameHeight / (float)inHeight;
+		float scaleWidth = frameWidth / (float)inWidth;
+
+		Mat frameOpenCVHaarSmall, frameGray;
+		resize(frameOpenCVHaar, frameOpenCVHaarSmall, Size(inWidth, inHeight));
+		cvtColor(frameOpenCVHaarSmall, frameGray, COLOR_BGR2GRAY);
+
+		std::vector<Rect> faces;
+		faceCascade.detectMultiScale(frameOpenCVHaar, faces);
+
+		for (size_t i = 0; i < faces.size(); i++)
+		{
+			int x1 = (int)(faces[i].x * scaleWidth);
+			int y1 = (int)(faces[i].y * scaleHeight);
+			int x2 = (int)((faces[i].x + faces[i].width) * scaleWidth);
+			int y2 = (int)((faces[i].y + faces[i].height) * scaleHeight);
+			rectangle(frameOpenCVHaar, Point(x1, y1), Point(x2, y2), Scalar(0, 255, 0), (int)(frameHeight / 150.0), 4);
+		}
+	}
 }

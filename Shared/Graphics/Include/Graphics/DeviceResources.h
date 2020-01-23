@@ -64,7 +64,7 @@ namespace Graphics
 
     private:
         // Private methods related to the Direct3D device, and resources based on that device.
-        void CreateDeviceIndependentResources();
+		 void CreateDeviceIndependentResources();
         void InitializeUsingHolographicSpace();
         void CreateDeviceResources();
 

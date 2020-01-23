@@ -338,16 +338,31 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="packages.config" />
     <None Include="README.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\..\packages\directxtk_uwp.2018.4.23.1\build\native\directxtk_uwp.targets" Condition="Exists('..\..\packages\directxtk_uwp.2018.4.23.1\build\native\directxtk_uwp.targets')" />
+    <Import Project="..\..\packages\OpenCV.Win.Core.310.6.1\build\native\opencv.win.core.targets" Condition="Exists('..\..\packages\OpenCV.Win.Core.310.6.1\build\native\opencv.win.core.targets')" />
+    <Import Project="..\..\packages\OpenCV.Win.ImgProc.310.6.1\build\native\opencv.win.imgproc.targets" Condition="Exists('..\..\packages\OpenCV.Win.ImgProc.310.6.1\build\native\opencv.win.imgproc.targets')" />
+    <Import Project="..\..\packages\OpenCV.Win.ImgCodecs.310.6.1\build\native\opencv.win.imgcodecs.targets" Condition="Exists('..\..\packages\OpenCV.Win.ImgCodecs.310.6.1\build\native\opencv.win.imgcodecs.targets')" />
+    <Import Project="..\..\packages\OpenCV.Win.ML.310.6.1\build\native\opencv.win.ml.targets" Condition="Exists('..\..\packages\OpenCV.Win.ML.310.6.1\build\native\opencv.win.ml.targets')" />
+    <Import Project="..\..\packages\OpenCV.Win.VideoIO.310.6.1\build\native\opencv.win.videoio.targets" Condition="Exists('..\..\packages\OpenCV.Win.VideoIO.310.6.1\build\native\opencv.win.videoio.targets')" />
+    <Import Project="..\..\packages\OpenCV.Win.HighGUI.310.6.1\build\native\opencv.win.highgui.targets" Condition="Exists('..\..\packages\OpenCV.Win.HighGUI.310.6.1\build\native\opencv.win.highgui.targets')" />
+    <Import Project="..\..\packages\OpenCV.Win.ObjDetect.310.6.1\build\native\opencv.win.objdetect.targets" Condition="Exists('..\..\packages\OpenCV.Win.ObjDetect.310.6.1\build\native\opencv.win.objdetect.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('..\..\packages\directxtk_uwp.2018.4.23.1\build\native\directxtk_uwp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\directxtk_uwp.2018.4.23.1\build\native\directxtk_uwp.targets'))" />
+    <Error Condition="!Exists('..\..\packages\OpenCV.Win.Core.310.6.1\build\native\opencv.win.core.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\OpenCV.Win.Core.310.6.1\build\native\opencv.win.core.targets'))" />
+    <Error Condition="!Exists('..\..\packages\OpenCV.Win.ImgProc.310.6.1\build\native\opencv.win.imgproc.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\OpenCV.Win.ImgProc.310.6.1\build\native\opencv.win.imgproc.targets'))" />
+    <Error Condition="!Exists('..\..\packages\OpenCV.Win.ImgCodecs.310.6.1\build\native\opencv.win.imgcodecs.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\OpenCV.Win.ImgCodecs.310.6.1\build\native\opencv.win.imgcodecs.targets'))" />
+    <Error Condition="!Exists('..\..\packages\OpenCV.Win.ML.310.6.1\build\native\opencv.win.ml.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\OpenCV.Win.ML.310.6.1\build\native\opencv.win.ml.targets'))" />
+    <Error Condition="!Exists('..\..\packages\OpenCV.Win.VideoIO.310.6.1\build\native\opencv.win.videoio.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\OpenCV.Win.VideoIO.310.6.1\build\native\opencv.win.videoio.targets'))" />
+    <Error Condition="!Exists('..\..\packages\OpenCV.Win.HighGUI.310.6.1\build\native\opencv.win.highgui.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\OpenCV.Win.HighGUI.310.6.1\build\native\opencv.win.highgui.targets'))" />
+    <Error Condition="!Exists('..\..\packages\OpenCV.Win.ObjDetect.310.6.1\build\native\opencv.win.objdetect.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\OpenCV.Win.ObjDetect.310.6.1\build\native\opencv.win.objdetect.targets'))" />
   </Target>
 </Project>
