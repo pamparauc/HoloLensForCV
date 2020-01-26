@@ -1,0 +1,12 @@
+1. Bloc cu "Initializarea spatiului holografic"
+    Atata timp cat fereastra este vizibila:
+			1.1. se preia un frame - Update(AppMainBase)
+			1.2. render - Lock the set of holographic camera resources, then draw to each camerain this frame.
+2. Update(AppMainBase):
+	extrage frame-ul si pozitia acestuia (coordonatele)
+	La fiecare Tick al timer-ului,
+		se apeleaza AppMain - Update pe baza pozitiei(coorodnatelor cadrului), a frameului si a timerului
+							se actualizeaza obiectul de randare (slateRander->update) prin efectuarea operatiilor de transformare (translare, scalare a imaginii)
+		se aplica operatii de prelucrare a imaginilor (BlurMedian, Cany)	
+		se actualizeaza Textura filtrata, ce va fi afisata
+	

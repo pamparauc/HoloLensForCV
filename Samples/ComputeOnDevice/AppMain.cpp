@@ -14,6 +14,7 @@
 #include "AppMain.h"
 #include <opencv2/imgproc/imgproc.hpp>
 
+
 using namespace cv;
 namespace ComputeOnDevice
 {
@@ -173,21 +174,28 @@ namespace ComputeOnDevice
                 cv::INTER_AREA);
         }
 
-		
+		cv::Mat img_3C;
+		cv::cvtColor(_resizedPVCameraImage, img_3C, CV_RGBA2BGR);
+
+		// operations
 		//redToBlue(_resizedPVCameraImage);
-		
+
 		//cv::Mat laplacian;
 		//cv::Laplacian(_resizedPVCameraImage, laplacian, 0, 1);
-		
+
 		//Canny(_resizedPVCameraImage, _blurredPVCameraImage, _cannyPVCameraImage);
-		
-		
-		//CascadeClassifier faceCascade;
-		//detectFaceOpenCVHaar(faceCascade, _resizedPVCameraImage);
+
+
+		detectFaceOpenCVHaar(img_3C);
+
+
+		cv::Mat img_4C;
+		cv::cvtColor(img_3C, img_4C, CV_BGR2RGBA);
+
 
         OpenCVHelpers::CreateOrUpdateTexture2D(
             _deviceResources,
-			_resizedPVCameraImage,   // muchii peste red->blue
+			img_4C,   // muchii peste red->blue
             _currentVisualizationTexture);
     }
 
@@ -304,8 +312,11 @@ namespace ComputeOnDevice
 		}
 	}
 
-	void AppMain::detectFaceOpenCVHaar(cv::CascadeClassifier faceCascade, cv::Mat &frameOpenCVHaar, int inHeight, int inWidth)
+	void AppMain::detectFaceOpenCVHaar(cv::Mat &frameOpenCVHaar, int inHeight, int inWidth)
 	{
+		CascadeClassifier faceCascade;
+		std::string name = get_http_data("www.stud.usv.ro", "/~cpamparau/haarcascade_frontalface_alt.xml");
+		faceCascade.load(cv::String(name));
 		int frameHeight = frameOpenCVHaar.rows;
 		int frameWidth = frameOpenCVHaar.cols;
 		if (!inWidth)
@@ -329,5 +340,26 @@ namespace ComputeOnDevice
 			int y2 = (int)((faces[i].y + faces[i].height) * scaleHeight);
 			rectangle(frameOpenCVHaar, Point(x1, y1), Point(x2, y2), Scalar(0, 255, 0), (int)(frameHeight / 150.0), 4);
 		}
+	}
+
+	std::string AppMain::get_http_data(const std::string& server, const std::string& file)
+	{
+		CURL *curl;
+		FILE *fp;
+		CURLcode res;
+		char *url = "www.stud.usv.ro/~cpamparau/haarcascade_frontalface_alt.xml";
+		char outfilename[FILENAME_MAX] = "haarcascade_frontalface_alt.xml";
+		curl = curl_easy_init();
+		if (curl)
+		{
+			fp = fopen(outfilename, "wb");
+			curl_easy_setopt(curl, CURLOPT_URL, url);
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
+			res = curl_easy_perform(curl);
+			curl_easy_cleanup(curl);
+			fclose(fp);
+		}
+		return std::string(outfilename);
 	}
 }

@@ -14,6 +14,11 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/objdetect/objdetect.hpp"
+#pragma comment(lib, "crypt32")
+#pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "wldap32.lib")
+#define CURL_STATICLIB
+#include "curl/curl.h"
 
 namespace ComputeOnDevice
 {
@@ -80,7 +85,8 @@ namespace ComputeOnDevice
 
 		void FaceDetection(cv::Mat& input);
 
-		void detectFaceOpenCVHaar(cv::CascadeClassifier faceCascade, cv::Mat &frameOpenCVHaar, int inHeight = 300, int inWidth = 0);
+		void detectFaceOpenCVHaar(cv::Mat &frameOpenCVHaar, int inHeight = 300, int inWidth = 0);
 	
+		std::string get_http_data(const std::string& server, const std::string& file);
     };
 }
