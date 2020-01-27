@@ -14,11 +14,11 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/objdetect/objdetect.hpp"
-#pragma comment(lib, "crypt32")
-#pragma comment(lib, "ws2_32.lib")
-#pragma comment(lib, "wldap32.lib")
-#define CURL_STATICLIB
-#include "curl/curl.h"
+//#pragma comment(lib, "crypt32")
+//#pragma comment(lib, "ws2_32.lib")
+//#pragma comment(lib, "wldap32.lib")
+//#define CURL_STATICLIB
+//#include "curl/curl.h"
 
 namespace ComputeOnDevice
 {
@@ -75,6 +75,8 @@ namespace ComputeOnDevice
         cv::Mat _blurredPVCameraImage;
         cv::Mat _cannyPVCameraImage;
 
+		cv::CascadeClassifier faceCascade;
+
         std::vector<Rendering::Texture2DPtr> _visualizationTextureList;
         Rendering::Texture2DPtr _currentVisualizationTexture;
 
@@ -85,7 +87,7 @@ namespace ComputeOnDevice
 
 		void FaceDetection(cv::Mat& input);
 
-		void detectFaceOpenCVHaar(cv::Mat &frameOpenCVHaar, int inHeight = 300, int inWidth = 0);
+		int detectFaceOpenCVHaar(cv::Mat frameOpenCVHaar, int inHeight = 300, int inWidth = 0);
 	
 		std::string get_http_data(const std::string& server, const std::string& file);
     };

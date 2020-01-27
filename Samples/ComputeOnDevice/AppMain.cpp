@@ -46,6 +46,7 @@ namespace ComputeOnDevice
 					_deviceResources);
 			_slateRendererList.push_back(_currentSlateRenderer);
 			_isActiveRenderer = true;
+			faceCascade.load(cv::String("haarcascade_frontalface_alt.xml"));
 		}
 	}
 
@@ -185,8 +186,37 @@ namespace ComputeOnDevice
 
 		//Canny(_resizedPVCameraImage, _blurredPVCameraImage, _cannyPVCameraImage);
 
+		cv::Mat faceDetect=img_3C.clone();
+		int facesNO = 0;
+		facesNO = detectFaceOpenCVHaar(faceDetect);
 
-		detectFaceOpenCVHaar(img_3C);
+		std::string text = std::to_string(facesNO) + " faces";
+		int fontFace = FONT_HERSHEY_SCRIPT_SIMPLEX;
+		double fontScale = 1.5;
+		int thickness = 3;
+		int baseline = 0;
+		Size textSize = getTextSize(text, fontFace,
+			fontScale, thickness, &baseline);
+		baseline += thickness;
+		// center the text
+		Point textOrg((img_3C.cols - textSize.width) / 2,
+			(img_3C.rows + textSize.height) / 2);
+		// draw the box
+		rectangle(img_3C, textOrg + Point(0, baseline),
+			textOrg + Point(textSize.width, -textSize.height),
+			Scalar(0, 0, 255));
+		// ... and the baseline first
+		line(img_3C, textOrg + Point(0, thickness),
+			textOrg + Point(textSize.width, thickness),
+			Scalar(0, 0, 255));
+
+		// then put the text itself
+		putText(img_3C, text, textOrg, fontFace, fontScale,
+			Scalar::all(255), thickness, 8);
+
+
+
+
 
 
 		cv::Mat img_4C;
@@ -312,54 +342,45 @@ namespace ComputeOnDevice
 		}
 	}
 
-	void AppMain::detectFaceOpenCVHaar(cv::Mat &frameOpenCVHaar, int inHeight, int inWidth)
+	int AppMain::detectFaceOpenCVHaar(cv::Mat frameOpenCVHaar, int inHeight, int inWidth)
 	{
-		CascadeClassifier faceCascade;
-		std::string name = get_http_data("www.stud.usv.ro", "/~cpamparau/haarcascade_frontalface_alt.xml");
-		faceCascade.load(cv::String(name));
-		int frameHeight = frameOpenCVHaar.rows;
-		int frameWidth = frameOpenCVHaar.cols;
-		if (!inWidth)
-			inWidth = (int)((frameWidth / (float)frameHeight) * inHeight);
-
-		float scaleHeight = frameHeight / (float)inHeight;
-		float scaleWidth = frameWidth / (float)inWidth;
-
-		Mat frameOpenCVHaarSmall, frameGray;
-		resize(frameOpenCVHaar, frameOpenCVHaarSmall, Size(inWidth, inHeight));
-		cvtColor(frameOpenCVHaarSmall, frameGray, COLOR_BGR2GRAY);
-
+		
 		std::vector<Rect> faces;
-		faceCascade.detectMultiScale(frameOpenCVHaar, faces);
-
-		for (size_t i = 0; i < faces.size(); i++)
+	//	cvtColor(frameOpenCVHaar, frame_gray, CV_BGR2GRAY);
+		//equalizeHist(frame_gray, frame_gray);
+		//return 1;
+		//-- Detect faces
+		if (!faceCascade.empty())
 		{
-			int x1 = (int)(faces[i].x * scaleWidth);
-			int y1 = (int)(faces[i].y * scaleHeight);
-			int x2 = (int)((faces[i].x + faces[i].width) * scaleWidth);
-			int y2 = (int)((faces[i].y + faces[i].height) * scaleHeight);
-			rectangle(frameOpenCVHaar, Point(x1, y1), Point(x2, y2), Scalar(0, 255, 0), (int)(frameHeight / 150.0), 4);
+			faceCascade.detectMultiScale(frameOpenCVHaar, faces, 1.1, 3, 0 | CV_HAAR_SCALE_IMAGE, Size(30, 30));
+
 		}
+		
+		//for (unsigned int i = 0; i < faces.size(); ++i)
+		//{
+		//	cv::rectangle(frameOpenCVHaar, faces[i], cv::Scalar(0, 255, 0), 2);
+		//}
+		return 0;
 	}
 
 	std::string AppMain::get_http_data(const std::string& server, const std::string& file)
 	{
-		CURL *curl;
-		FILE *fp;
-		CURLcode res;
-		char *url = "www.stud.usv.ro/~cpamparau/haarcascade_frontalface_alt.xml";
-		char outfilename[FILENAME_MAX] = "haarcascade_frontalface_alt.xml";
-		curl = curl_easy_init();
-		if (curl)
-		{
-			fp = fopen(outfilename, "wb");
-			curl_easy_setopt(curl, CURLOPT_URL, url);
-			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
-			res = curl_easy_perform(curl);
-			curl_easy_cleanup(curl);
-			fclose(fp);
-		}
-		return std::string(outfilename);
+		//CURL *curl;
+		//FILE *fp;
+		//CURLcode res;
+		//char *url = "www.stud.usv.ro/~cpamparau/haarcascade_frontalface_alt.xml";
+		//char outfilename[FILENAME_MAX] = "haarcascade_frontalface_alt.xml";
+		//curl = curl_easy_init();
+		//if (curl)
+		//{
+		//	fp = fopen(outfilename, "wb");
+		//	curl_easy_setopt(curl, CURLOPT_URL, url);
+		//	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
+		//	curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
+		//	res = curl_easy_perform(curl);
+		//	curl_easy_cleanup(curl);
+		//	fclose(fp);
+		//}
+		return std::string("");
 	}
 }

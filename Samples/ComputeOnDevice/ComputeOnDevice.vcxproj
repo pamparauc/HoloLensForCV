@@ -149,6 +149,11 @@
       <Project>{421bb462-74f2-4831-9ab7-06b77e0a98b4}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <Xml Include="haarcascade_frontalface_alt.xml">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+    </Xml>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(VSINSTALLDIR)\Common7\IDE\Extensions\Microsoft\VsGraphics\ImageContentTask.targets" />
@@ -166,7 +171,6 @@
     <Import Project="..\..\packages\directxtk_uwp.2018.4.23.1\build\native\directxtk_uwp.targets" Condition="Exists('..\..\packages\directxtk_uwp.2018.4.23.1\build\native\directxtk_uwp.targets')" />
     <Import Project="..\..\packages\OpenCV.Win.ObjDetect.310.6.1\build\native\opencv.win.objdetect.targets" Condition="Exists('..\..\packages\OpenCV.Win.ObjDetect.310.6.1\build\native\opencv.win.objdetect.targets')" />
     <Import Project="..\..\packages\openssl-vc141-static-x86_64.1.0.2\build\native\openssl-vc141-static-x86_64.targets" Condition="Exists('..\..\packages\openssl-vc141-static-x86_64.1.0.2\build\native\openssl-vc141-static-x86_64.targets')" />
-    <Import Project="..\..\packages\curl-vc141-dynamic-x86_64.7.59.0\build\native\curl-vc141-dynamic-x86_64.targets" Condition="Exists('..\..\packages\curl-vc141-dynamic-x86_64.7.59.0\build\native\curl-vc141-dynamic-x86_64.targets')" />
   </ImportGroup>
   <PropertyGroup>
     <AppxPackageSigningEnabled>true</AppxPackageSigningEnabled>
@@ -188,6 +192,5 @@
     <Error Condition="!Exists('..\..\packages\directxtk_uwp.2018.4.23.1\build\native\directxtk_uwp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\directxtk_uwp.2018.4.23.1\build\native\directxtk_uwp.targets'))" />
     <Error Condition="!Exists('..\..\packages\OpenCV.Win.ObjDetect.310.6.1\build\native\opencv.win.objdetect.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\OpenCV.Win.ObjDetect.310.6.1\build\native\opencv.win.objdetect.targets'))" />
     <Error Condition="!Exists('..\..\packages\openssl-vc141-static-x86_64.1.0.2\build\native\openssl-vc141-static-x86_64.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\openssl-vc141-static-x86_64.1.0.2\build\native\openssl-vc141-static-x86_64.targets'))" />
-    <Error Condition="!Exists('..\..\packages\curl-vc141-dynamic-x86_64.7.59.0\build\native\curl-vc141-dynamic-x86_64.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\curl-vc141-dynamic-x86_64.7.59.0\build\native\curl-vc141-dynamic-x86_64.targets'))" />
   </Target>
 </Project>

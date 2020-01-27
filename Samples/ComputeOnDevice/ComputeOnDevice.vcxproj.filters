@@ -47,4 +47,7 @@
     <None Include="ClassDiagram.cd" />
     <None Include="ClassDiagram1.cd" />
   </ItemGroup>
+  <ItemGroup>
+    <Xml Include="haarcascade_frontalface_alt.xml" />
+  </ItemGroup>
 </Project>
