@@ -16,7 +16,7 @@ namespace OpenCVHelpers
     void CreateOrUpdateTexture2D(
         _In_ const Graphics::DeviceResourcesPtr& deviceResources,
         _In_ const cv::Mat& image,
-        _Inout_opt_ Rendering::Texture2DPtr& texture)
+        _Inout_opt_ Rendering::Texture2DPtr& texture, int type)
     {
         if (nullptr == texture)
         {
@@ -35,7 +35,7 @@ namespace OpenCVHelpers
             cv::Mat mappedTextureAsImage(
                 texture->GetHeight(),
                 texture->GetWidth(),
-                CV_8UC4,
+                type,
                 mappedTexture);
 
             image.copyTo(

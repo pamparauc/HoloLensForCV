@@ -16,7 +16,7 @@ namespace OpenCVHelpers
     void CreateOrUpdateTexture2D(
         _In_ const Graphics::DeviceResourcesPtr& deviceResources,
         _In_ const cv::Mat& image,
-        _Inout_opt_ Rendering::Texture2DPtr& texture);
+        _Inout_opt_ Rendering::Texture2DPtr& texture, int type = CV_8UC4);
 
     void ReadBackTexture2D(
         _In_ const Rendering::Texture2DPtr& texture,

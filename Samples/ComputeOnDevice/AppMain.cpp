@@ -12,7 +12,6 @@
 #include "pch.h"
 
 #include "AppMain.h"
-#include <opencv2/imgproc/imgproc.hpp>
 
 
 using namespace cv;
@@ -46,7 +45,8 @@ namespace ComputeOnDevice
 					_deviceResources);
 			_slateRendererList.push_back(_currentSlateRenderer);
 			_isActiveRenderer = true;
-			faceCascade.load(cv::String("haarcascade_frontalface_alt.xml"));
+			//std::string name = get_http_data("www.stud.usv.ro", "/~cpamparau/haarcascade_frontalface_alt.xml");
+			//faceCascade.load(cv::String(name));
 		}
 	}
 
@@ -177,7 +177,7 @@ namespace ComputeOnDevice
 
 		cv::Mat img_3C;
 		cv::cvtColor(_resizedPVCameraImage, img_3C, CV_RGBA2BGR);
-
+		int tip_3C = img_3C.type();
 		// operations
 		//redToBlue(_resizedPVCameraImage);
 
@@ -186,19 +186,26 @@ namespace ComputeOnDevice
 
 		//Canny(_resizedPVCameraImage, _blurredPVCameraImage, _cannyPVCameraImage);
 
-		//detectFaceOpenCVHaar(img_3C);
-		cv::Mat out;
+		//detectFaces(img_3C);
+		//cv::Mat out;
 		/*out = modifyBrigthnessByValue(img_3C, -100);*/
-		out = modifyContrastByValue(img_3C, 0.5);
+		//out = modifyContrastByValue(img_3C, 0.5);
+
+		//img_3C = grabCut(img_3C.clone());
+		//img_3C = backrgoundSubstraction(img_3C.clone());
+		//int tip2 = img_3C.type();
+		cv::Mat inp;
+		cv::fastNlMeansDenoisingColored(img_3C, inp, 10, 10);
 
 		cv::Mat img_4C;
-		cv::cvtColor(out, img_4C, CV_BGR2RGBA);
+		if(img_3C.type() == 16 /* CV_8UC3*/)
+			cv::cvtColor(inp, img_4C, CV_BGR2RGBA);
 
 
         OpenCVHelpers::CreateOrUpdateTexture2D(
             _deviceResources,
 			img_4C,   // muchii peste red->blue
-            _currentVisualizationTexture);
+            _currentVisualizationTexture /*, CV_8UC1*/);
     }
 
     void AppMain::OnPreRender()
@@ -314,47 +321,9 @@ namespace ComputeOnDevice
 		}
 	}
 
-	void AppMain::detectFaceOpenCVHaar(cv::Mat& frameOpenCVHaar, int inHeight, int inWidth)
+	void AppMain::detectFaces(cv::Mat& frameOpenCVHaar, int inHeight, int inWidth)
 	{
 		
-		std::vector<Rect> faces;
-	//	cvtColor(frameOpenCVHaar, frame_gray, CV_BGR2GRAY);
-		//equalizeHist(frame_gray, frame_gray);
-		//return 1;
-		//-- Detect faces
-		if (!faceCascade.empty())
-		{
-			faceCascade.detectMultiScale(frameOpenCVHaar, faces, 1.1, 3, 0 | CV_HAAR_SCALE_IMAGE, Size(30, 30));
-
-		}
-		
-		//for (unsigned int i = 0; i < faces.size(); ++i)
-		//{
-		//	cv::rectangle(frameOpenCVHaar, faces[i], cv::Scalar(0, 255, 0), 2);
-		//}
-		std::string text = std::to_string(faces.size()) + " faces";
-		int fontFace = FONT_HERSHEY_SCRIPT_SIMPLEX;
-		double fontScale = 1.5;
-		int thickness = 3;
-		int baseline = 0;
-		Size textSize = getTextSize(text, fontFace,
-			fontScale, thickness, &baseline);
-		baseline += thickness;
-		// center the text
-		Point textOrg((frameOpenCVHaar.cols - textSize.width) / 2,
-			(frameOpenCVHaar.rows + textSize.height) / 2);
-		// draw the box
-		rectangle(frameOpenCVHaar, textOrg + Point(0, baseline),
-			textOrg + Point(textSize.width, -textSize.height),
-			Scalar(0, 0, 255));
-		// ... and the baseline first
-		line(frameOpenCVHaar, textOrg + Point(0, thickness),
-			textOrg + Point(textSize.width, thickness),
-			Scalar(0, 0, 255));
-
-		// then put the text itself
-		putText(frameOpenCVHaar, text, textOrg, fontFace, fontScale,
-			Scalar::all(255), thickness, 8);
 	}
 
 	std::string AppMain::get_http_data(const std::string& server, const std::string& file)
@@ -362,8 +331,8 @@ namespace ComputeOnDevice
 		//CURL *curl;
 		//FILE *fp;
 		//CURLcode res;
-		//char *url = "www.stud.usv.ro/~cpamparau/haarcascade_frontalface_alt.xml";
-		//char outfilename[FILENAME_MAX] = "haarcascade_frontalface_alt.xml";
+		char *url = "www.stud.usv.ro/~cpamparau/haarcascade_frontalface_alt.xml";
+		char outfilename[FILENAME_MAX] = "haarcascade_frontalface_alt.xml";
 		//curl = curl_easy_init();
 		//if (curl)
 		//{
@@ -375,7 +344,7 @@ namespace ComputeOnDevice
 		//	curl_easy_cleanup(curl);
 		//	fclose(fp);
 		//}
-		return std::string("");
+		return std::string(outfilename);
 	}
 
 	cv::Mat AppMain::modifyBrigthnessByValue(cv::Mat input, double value)
@@ -394,5 +363,46 @@ namespace ComputeOnDevice
 		// value > 1 => increase contrast
 		input.convertTo(output, -1, value, 0);
 		return output;
+	}
+
+	cv::Mat AppMain::grabCut(cv::Mat img)
+	{
+		cv::Mat1b markers(img.rows, img.cols);
+		markers.setTo(cv::GC_PR_BGD);
+		// cut out a small area in the middle of the image
+		int m_rows = 0.1 * img.rows;
+		int m_cols = 0.1 * img.cols;
+		// of course here you could also use cv::Rect() instead of cv::Range to select
+			// the region of interest
+		cv::Mat1b fg_seed = markers(cv::Range(img.rows / 2 - m_rows / 2, img.rows / 2 + m_rows / 2),
+				cv::Range(img.cols / 2 - m_cols / 2, img.cols / 2 + m_cols / 2));
+		// mark it as foreground
+		fg_seed.setTo(cv::GC_FGD);
+
+		// select first 5 rows of the image as background
+		cv::Mat1b bg_seed = markers(cv::Range(0, 5), cv::Range::all());
+		bg_seed.setTo(cv::GC_BGD);
+
+		cv::Mat bgd, fgd;
+		int iterations = 1;
+		cv::grabCut(img, markers, cv::Rect(), bgd, fgd, iterations, cv::GC_INIT_WITH_MASK);
+
+		// let's get all foreground and possible foreground pixels
+		cv::Mat1b mask_fgpf = (markers == cv::GC_FGD) | (markers == cv::GC_PR_FGD);
+		// and copy all the foreground-pixels to a temporary image
+		cv::Mat3b tmp = cv::Mat3b::zeros(img.rows, img.cols);
+		img.copyTo(tmp, mask_fgpf);
+		return (cv::Mat)tmp;
+	}
+
+	cv::Mat AppMain::backrgoundSubstraction(cv::Mat input)
+	{
+		Ptr<cv::BackgroundSubtractor> pBackSub = createBackgroundSubtractorKNN();
+		cv::Mat fgMask(input.rows, input.cols, CV_8UC3);
+		//update the background model
+		pBackSub->apply(input, fgMask);
+		//cv::Mat out;
+		//cvtColor(fgMask, out, COLOR_GRAY2BGR);
+		return fgMask;
 	}
 }
