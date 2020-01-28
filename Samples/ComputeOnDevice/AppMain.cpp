@@ -198,7 +198,7 @@ namespace ComputeOnDevice
 		cv::fastNlMeansDenoisingColored(img_3C, inp, 10, 10);
 
 		cv::Mat img_4C;
-		if(img_3C.type() == 16 /* CV_8UC3*/)
+		if(inp.type() == 16 /* CV_8UC3*/)
 			cv::cvtColor(inp, img_4C, CV_BGR2RGBA);
 
 
