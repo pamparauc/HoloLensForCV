@@ -186,41 +186,13 @@ namespace ComputeOnDevice
 
 		//Canny(_resizedPVCameraImage, _blurredPVCameraImage, _cannyPVCameraImage);
 
-		cv::Mat faceDetect=img_3C.clone();
-		int facesNO = 0;
-		facesNO = detectFaceOpenCVHaar(faceDetect);
-
-		std::string text = std::to_string(facesNO) + " faces";
-		int fontFace = FONT_HERSHEY_SCRIPT_SIMPLEX;
-		double fontScale = 1.5;
-		int thickness = 3;
-		int baseline = 0;
-		Size textSize = getTextSize(text, fontFace,
-			fontScale, thickness, &baseline);
-		baseline += thickness;
-		// center the text
-		Point textOrg((img_3C.cols - textSize.width) / 2,
-			(img_3C.rows + textSize.height) / 2);
-		// draw the box
-		rectangle(img_3C, textOrg + Point(0, baseline),
-			textOrg + Point(textSize.width, -textSize.height),
-			Scalar(0, 0, 255));
-		// ... and the baseline first
-		line(img_3C, textOrg + Point(0, thickness),
-			textOrg + Point(textSize.width, thickness),
-			Scalar(0, 0, 255));
-
-		// then put the text itself
-		putText(img_3C, text, textOrg, fontFace, fontScale,
-			Scalar::all(255), thickness, 8);
-
-
-
-
-
+		//detectFaceOpenCVHaar(img_3C);
+		cv::Mat out;
+		/*out = modifyBrigthnessByValue(img_3C, -100);*/
+		out = modifyContrastByValue(img_3C, 0.5);
 
 		cv::Mat img_4C;
-		cv::cvtColor(img_3C, img_4C, CV_BGR2RGBA);
+		cv::cvtColor(out, img_4C, CV_BGR2RGBA);
 
 
         OpenCVHelpers::CreateOrUpdateTexture2D(
@@ -342,7 +314,7 @@ namespace ComputeOnDevice
 		}
 	}
 
-	int AppMain::detectFaceOpenCVHaar(cv::Mat frameOpenCVHaar, int inHeight, int inWidth)
+	void AppMain::detectFaceOpenCVHaar(cv::Mat& frameOpenCVHaar, int inHeight, int inWidth)
 	{
 		
 		std::vector<Rect> faces;
@@ -360,7 +332,29 @@ namespace ComputeOnDevice
 		//{
 		//	cv::rectangle(frameOpenCVHaar, faces[i], cv::Scalar(0, 255, 0), 2);
 		//}
-		return 0;
+		std::string text = std::to_string(faces.size()) + " faces";
+		int fontFace = FONT_HERSHEY_SCRIPT_SIMPLEX;
+		double fontScale = 1.5;
+		int thickness = 3;
+		int baseline = 0;
+		Size textSize = getTextSize(text, fontFace,
+			fontScale, thickness, &baseline);
+		baseline += thickness;
+		// center the text
+		Point textOrg((frameOpenCVHaar.cols - textSize.width) / 2,
+			(frameOpenCVHaar.rows + textSize.height) / 2);
+		// draw the box
+		rectangle(frameOpenCVHaar, textOrg + Point(0, baseline),
+			textOrg + Point(textSize.width, -textSize.height),
+			Scalar(0, 0, 255));
+		// ... and the baseline first
+		line(frameOpenCVHaar, textOrg + Point(0, thickness),
+			textOrg + Point(textSize.width, thickness),
+			Scalar(0, 0, 255));
+
+		// then put the text itself
+		putText(frameOpenCVHaar, text, textOrg, fontFace, fontScale,
+			Scalar::all(255), thickness, 8);
 	}
 
 	std::string AppMain::get_http_data(const std::string& server, const std::string& file)
@@ -382,5 +376,23 @@ namespace ComputeOnDevice
 		//	fclose(fp);
 		//}
 		return std::string("");
+	}
+
+	cv::Mat AppMain::modifyBrigthnessByValue(cv::Mat input, double value)
+	{
+		cv::Mat output;
+		// value > 0 => increase brigthness
+		// value < 0 => decrease brigthness
+		input.convertTo(output, -1, 1, value);
+		return output;
+	}
+
+	cv::Mat AppMain::modifyContrastByValue(cv::Mat input, double value)
+	{
+		cv::Mat output;
+		// value < 1 => decrease contrast
+		// value > 1 => increase contrast
+		input.convertTo(output, -1, value, 0);
+		return output;
 	}
 }

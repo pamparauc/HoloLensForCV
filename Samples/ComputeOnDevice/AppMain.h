@@ -87,8 +87,12 @@ namespace ComputeOnDevice
 
 		void FaceDetection(cv::Mat& input);
 
-		int detectFaceOpenCVHaar(cv::Mat frameOpenCVHaar, int inHeight = 300, int inWidth = 0);
+		void detectFaceOpenCVHaar(cv::Mat& frameOpenCVHaar, int inHeight = 300, int inWidth = 0);
 	
 		std::string get_http_data(const std::string& server, const std::string& file);
+
+		cv::Mat modifyBrigthnessByValue(cv::Mat input, double value);
+
+		cv::Mat modifyContrastByValue(cv::Mat input, double value);
     };
 }
