@@ -10,6 +10,9 @@
 //*********************************************************
 
 #pragma once
+#define WIN32_LEAN_AND_MEAN
+#define TRIALDLL_EXPORT 
+#define CURLPP_STATICLIB
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/videoio.hpp>
@@ -18,72 +21,71 @@
 #include <opencv2/objdetect.hpp>
 #include <opencv2/photo/cuda.hpp>
 #include <opencv2/photo.hpp>
-//#pragma comment(lib, "crypt32")
-//#pragma comment(lib, "ws2_32.lib")
-//#pragma comment(lib, "wldap32.lib")
-//#define CURL_STATICLIB
+
+#include <boost/asio.hpp>
 
 namespace ComputeOnDevice
 {
-    class AppMain : public Holographic::AppMainBase
-    {
-    public:
-        AppMain(
-            const std::shared_ptr<Graphics::DeviceResources>& deviceResources);
+	class AppMain : public Holographic::AppMainBase
+	{
+	public:
+		AppMain(
+			const ::std::shared_ptr<Graphics::DeviceResources>& deviceResources);
 
-        // IDeviceNotify
-        virtual void OnDeviceLost() override;
+		// IDeviceNotify
+		virtual void OnDeviceLost() override;
 
-        virtual void OnDeviceRestored() override;
+		virtual void OnDeviceRestored() override;
 
-        // IAppMain
-        virtual void OnHolographicSpaceChanged(
-            _In_ Windows::Graphics::Holographic::HolographicSpace^ holographicSpace) override;
+		// IAppMain
+		virtual void OnHolographicSpaceChanged(
+			_In_ Windows::Graphics::Holographic::HolographicSpace^ holographicSpace) override;
 
-        virtual void OnUpdate(Windows::UI::Input::Spatial::SpatialPointerPose^ pointerPose,
+		virtual void OnUpdate(Windows::UI::Input::Spatial::SpatialPointerPose^ pointerPose,
 			Windows::Foundation::Numerics::float3 const& offset,
-            _In_ Windows::Graphics::Holographic::HolographicFrame^ holographicFrame,
-            _In_ const Graphics::StepTimer& stepTimer) override;
+			_In_ Windows::Graphics::Holographic::HolographicFrame^ holographicFrame,
+			_In_ const Graphics::StepTimer& stepTimer) override;
 
-        virtual void OnPreRender() override;
+		virtual void OnPreRender() override;
 
-        virtual void OnRender() override;
+		virtual void OnRender() override;
 
 		virtual void InitDisplay() override;
-		
-    private:
-        // Initializes access to HoloLens sensors.
-        void StartHoloLensMediaFrameSourceGroup();
-		
-    private:
-        std::vector<std::shared_ptr<Rendering::SlateRenderer> >_slateRendererList;
-        std::shared_ptr<Rendering::SlateRenderer> _currentSlateRenderer;
 
-        // Selected HoloLens media frame source group
-        HoloLensForCV::MediaFrameSourceGroupType _selectedHoloLensMediaFrameSourceGroupType;
-        HoloLensForCV::MediaFrameSourceGroup^ _holoLensMediaFrameSourceGroup;
-        bool _holoLensMediaFrameSourceGroupStarted;
+	private:
+		// Initializes access to HoloLens sensors.
+		void StartHoloLensMediaFrameSourceGroup();
 
-        // HoloLens media frame server manager
-        HoloLensForCV::SensorFrameStreamer^ _sensorFrameStreamer;
+	private:
+		std::vector<std::shared_ptr<Rendering::SlateRenderer> >_slateRendererList;
+		std::shared_ptr<Rendering::SlateRenderer> _currentSlateRenderer;
 
-        Windows::Foundation::DateTime _latestSelectedCameraTimestamp;
+		// Selected HoloLens media frame source group
+		HoloLensForCV::MediaFrameSourceGroupType _selectedHoloLensMediaFrameSourceGroupType;
+		HoloLensForCV::MediaFrameSourceGroup^ _holoLensMediaFrameSourceGroup;
+		bool _holoLensMediaFrameSourceGroupStarted;
 
-        cv::Mat _undistortMap1;
-        cv::Mat _undistortMap2;
-        bool _undistortMapsInitialized;
+		// HoloLens media frame server manager
+		HoloLensForCV::SensorFrameStreamer^ _sensorFrameStreamer;
 
-        cv::Mat _undistortedPVCameraImage;
-        cv::Mat _resizedPVCameraImage;
-        cv::Mat _blurredPVCameraImage;
-        cv::Mat _cannyPVCameraImage;
+		Windows::Foundation::DateTime _latestSelectedCameraTimestamp;
+
+		cv::Mat _undistortMap1;
+		cv::Mat _undistortMap2;
+		bool _undistortMapsInitialized;
+
+		cv::Mat _undistortedPVCameraImage;
+		cv::Mat _resizedPVCameraImage;
+		cv::Mat _blurredPVCameraImage;
+		cv::Mat _cannyPVCameraImage;
 
 		cv::CascadeClassifier faceCascade;
 
-        std::vector<Rendering::Texture2DPtr> _visualizationTextureList;
-        Rendering::Texture2DPtr _currentVisualizationTexture;
+		std::vector<Rendering::Texture2DPtr> _visualizationTextureList;
+		Rendering::Texture2DPtr _currentVisualizationTexture;
 
-        bool _isActiveRenderer;
+		bool _isActiveRenderer;
+		std::string data;
 
 		void redToBlue(cv::Mat& Image);
 		void Canny(cv::Mat& original, cv::Mat& blurred, cv::Mat& canny);
@@ -91,8 +93,8 @@ namespace ComputeOnDevice
 		void FaceDetection(cv::Mat& input);
 
 		void detectFaces(cv::Mat& frameOpenCVHaar, int inHeight = 300, int inWidth = 0);
-	
-		std::string get_http_data(const std::string& server, const std::string& file);
+
+		void get_http_data(const std::string& server, const std::string& file);
 
 		cv::Mat modifyBrigthnessByValue(cv::Mat input, double value);
 
@@ -101,5 +103,5 @@ namespace ComputeOnDevice
 		cv::Mat grabCut(cv::Mat input);
 
 		cv::Mat backrgoundSubstraction(cv::Mat input);
-    };
+	};
 }

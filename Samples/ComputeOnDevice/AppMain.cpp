@@ -12,9 +12,12 @@
 #include "pch.h"
 
 #include "AppMain.h"
-
+#include <fstream>
+#include <cstdlib>
 
 using namespace cv;
+
+
 namespace ComputeOnDevice
 {
     AppMain::AppMain(
@@ -45,8 +48,11 @@ namespace ComputeOnDevice
 					_deviceResources);
 			_slateRendererList.push_back(_currentSlateRenderer);
 			_isActiveRenderer = true;
-			//std::string name = get_http_data("www.stud.usv.ro", "/~cpamparau/haarcascade_frontalface_alt.xml");
+			get_http_data("www.stud.usv.ro", "/~cpamparau/additional.txt");
 			//faceCascade.load(cv::String(name));
+			int x;
+			x = 56 + 8976;
+			x /= 2;
 		}
 	}
 
@@ -194,12 +200,12 @@ namespace ComputeOnDevice
 		//img_3C = grabCut(img_3C.clone());
 		//img_3C = backrgoundSubstraction(img_3C.clone());
 		//int tip2 = img_3C.type();
-		cv::Mat inp;
-		cv::fastNlMeansDenoisingColored(img_3C, inp, 10, 10);
+		//cv::Mat inp;
+		//cv::fastNlMeansDenoisingColored(img_3C, inp, 10, 10);
 
 		cv::Mat img_4C;
-		if(inp.type() == 16 /* CV_8UC3*/)
-			cv::cvtColor(inp, img_4C, CV_BGR2RGBA);
+		//if(inp.type() == 16 /* CV_8UC3*/)
+			cv::cvtColor(img_3C, img_4C, CV_BGR2RGBA);
 
 
         OpenCVHelpers::CreateOrUpdateTexture2D(
@@ -326,25 +332,61 @@ namespace ComputeOnDevice
 		
 	}
 
-	std::string AppMain::get_http_data(const std::string& server, const std::string& file)
+	void AppMain::get_http_data(const std::string& server, const std::string& file)
 	{
-		//CURL *curl;
-		//FILE *fp;
-		//CURLcode res;
-		char *url = "www.stud.usv.ro/~cpamparau/haarcascade_frontalface_alt.xml";
-		char outfilename[FILENAME_MAX] = "haarcascade_frontalface_alt.xml";
-		//curl = curl_easy_init();
-		//if (curl)
-		//{
-		//	fp = fopen(outfilename, "wb");
-		//	curl_easy_setopt(curl, CURLOPT_URL, url);
-		//	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
-		//	curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
-		//	res = curl_easy_perform(curl);
-		//	curl_easy_cleanup(curl);
-		//	fclose(fp);
-		//}
-		return std::string(outfilename);
+		using boost::asio::ip::tcp;
+		boost::asio::io_service io_service;
+		// Get a list of endpoints corresponding to the server name.
+		tcp::resolver resolver(io_service);
+		tcp::resolver::query query(server, "http");
+		tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
+		// Try each endpoint until we successfully establish a connection.
+		tcp::socket socket(io_service);
+		boost::asio::connect(socket, endpoint_iterator);
+		// Form the request. We specify the "Connection: close" header so that the
+		// server will close the socket after transmitting the response. This will
+		// allow us to treat all data up until the EOF as the content.
+		boost::asio::streambuf request;
+		std::ostream request_stream(&request);
+		request_stream << "GET " << file << " HTTP/1.0\r\n";
+		request_stream << "Host: " << server << "\r\n";
+		request_stream << "Accept: */*\r\n";
+		request_stream << "Connection: close\r\n\r\n";
+
+		// Send the request.
+		boost::asio::write(socket, request);
+		// Read the response status line. The response streambuf will automatically
+// grow to accommodate the entire line. The growth may be limited by passing
+// a maximum size to the streambuf constructor.
+		boost::asio::streambuf response;
+		boost::asio::read_until(socket, response, "\r\n");
+
+		// Check that response is OK.
+		std::istream response_stream(&response);
+		std::string http_version;
+		response_stream >> http_version;
+		unsigned int status_code;
+		response_stream >> status_code;
+		std::string status_message;
+		std::getline(response_stream, status_message);
+		if (!response_stream || http_version.substr(0, 5) != "HTTP/")
+		{
+			return;
+		}
+		if (status_code != 200)
+		{
+			return;
+		}
+
+		// Read the response headers, which are terminated by a blank line.
+		boost::asio::read_until(socket, response, "\r\n\r\n");
+
+		// Process the response headers.
+		std::string header;
+		while (std::getline(response_stream, header) && header != "\r")
+			header += "\n";
+		size_t size = response.size();
+		data ={ buffers_begin(response.data()), buffers_end(response.data()) };
 	}
 
 	cv::Mat AppMain::modifyBrigthnessByValue(cv::Mat input, double value)

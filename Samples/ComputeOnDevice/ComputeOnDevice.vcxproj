@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\..\packages\openssl.1.0.1.21\build\native\openssl.props" Condition="Exists('..\..\packages\openssl.1.0.1.21\build\native\openssl.props')" />
   <Import Project="$(SolutionDir)\packages\directxtk_uwp.2018.4.23.1\build\native\directxtk_uwp.props" Condition="Exists('$(SolutionDir)\packages\directxtk_uwp.2018.4.23.1\build\native\directxtk_uwp.props')" />
   <PropertyGroup Label="Globals">
     <ProjectGuid>{CF168211-03A8-419E-840B-3E6BF6688FD9}</ProjectGuid>
@@ -10,7 +11,7 @@
     <AppContainerApplication>true</AppContainerApplication>
     <ApplicationType>Windows Store</ApplicationType>
     <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
-    <WindowsTargetPlatformMinVersion>10.0.17134.0</WindowsTargetPlatformMinVersion>
+    <WindowsTargetPlatformMinVersion>10.0.10240.0</WindowsTargetPlatformMinVersion>
     <ApplicationTypeRevision>10.0</ApplicationTypeRevision>
     <EnableDotNetNativeCompatibleProfile>true</EnableDotNetNativeCompatibleProfile>
   </PropertyGroup>
@@ -28,7 +29,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -66,7 +66,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Link>
       <AdditionalDependencies>d2d1.lib;d3d11.lib;dxgi.lib;dwrite.lib;windowscodecs.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories); $(VCInstallDir)\lib\store; $(VCInstallDir)\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories);$(VCInstallDir)\lib\store;$(VCInstallDir)\lib</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>mincore.lib;kernel32.lib;ole32.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
     </Link>
     <ClCompile>
@@ -77,6 +77,8 @@
       <PreprocessorDefinitions>_DEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <WarningLevel>Level4</WarningLevel>
       <TreatWarningAsError>false</TreatWarningAsError>
+      <LanguageStandard>stdcpp14</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -172,6 +174,14 @@
     <Import Project="..\..\packages\OpenCV.Win.ObjDetect.310.6.1\build\native\opencv.win.objdetect.targets" Condition="Exists('..\..\packages\OpenCV.Win.ObjDetect.310.6.1\build\native\opencv.win.objdetect.targets')" />
     <Import Project="..\..\packages\OpenCV.Win.Video.310.6.1\build\native\opencv.win.video.targets" Condition="Exists('..\..\packages\OpenCV.Win.Video.310.6.1\build\native\opencv.win.video.targets')" />
     <Import Project="..\..\packages\OpenCV.Win.Photo.310.6.1\build\native\opencv.win.photo.targets" Condition="Exists('..\..\packages\OpenCV.Win.Photo.310.6.1\build\native\opencv.win.photo.targets')" />
+    <Import Project="..\..\packages\openssl.redist.1.0.1.21\build\native\openssl.redist.targets" Condition="Exists('..\..\packages\openssl.redist.1.0.1.21\build\native\openssl.redist.targets')" />
+    <Import Project="..\..\packages\zlib.redist.1.2.8.1\build\native\zlib.redist.targets" Condition="Exists('..\..\packages\zlib.redist.1.2.8.1\build\native\zlib.redist.targets')" />
+    <Import Project="..\..\packages\zlib.1.2.8.1\build\native\zlib.targets" Condition="Exists('..\..\packages\zlib.1.2.8.1\build\native\zlib.targets')" />
+    <Import Project="..\..\packages\openssl.1.0.1.21\build\native\openssl.targets" Condition="Exists('..\..\packages\openssl.1.0.1.21\build\native\openssl.targets')" />
+    <Import Project="..\..\packages\boost.1.71.0.0\build\boost.targets" Condition="Exists('..\..\packages\boost.1.71.0.0\build\boost.targets')" />
+    <Import Project="..\..\packages\boost_system-vc141.1.71.0.0\build\boost_system-vc141.targets" Condition="Exists('..\..\packages\boost_system-vc141.1.71.0.0\build\boost_system-vc141.targets')" />
+    <Import Project="..\..\packages\boost_date_time-vc141.1.71.0.0\build\boost_date_time-vc141.targets" Condition="Exists('..\..\packages\boost_date_time-vc141.1.71.0.0\build\boost_date_time-vc141.targets')" />
+    <Import Project="..\..\packages\boost_regex-vc141.1.71.0.0\build\boost_regex-vc141.targets" Condition="Exists('..\..\packages\boost_regex-vc141.1.71.0.0\build\boost_regex-vc141.targets')" />
   </ImportGroup>
   <PropertyGroup>
     <AppxPackageSigningEnabled>true</AppxPackageSigningEnabled>
@@ -194,5 +204,14 @@
     <Error Condition="!Exists('..\..\packages\OpenCV.Win.ObjDetect.310.6.1\build\native\opencv.win.objdetect.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\OpenCV.Win.ObjDetect.310.6.1\build\native\opencv.win.objdetect.targets'))" />
     <Error Condition="!Exists('..\..\packages\OpenCV.Win.Video.310.6.1\build\native\opencv.win.video.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\OpenCV.Win.Video.310.6.1\build\native\opencv.win.video.targets'))" />
     <Error Condition="!Exists('..\..\packages\OpenCV.Win.Photo.310.6.1\build\native\opencv.win.photo.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\OpenCV.Win.Photo.310.6.1\build\native\opencv.win.photo.targets'))" />
+    <Error Condition="!Exists('..\..\packages\openssl.redist.1.0.1.21\build\native\openssl.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\openssl.redist.1.0.1.21\build\native\openssl.redist.targets'))" />
+    <Error Condition="!Exists('..\..\packages\zlib.redist.1.2.8.1\build\native\zlib.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\zlib.redist.1.2.8.1\build\native\zlib.redist.targets'))" />
+    <Error Condition="!Exists('..\..\packages\zlib.1.2.8.1\build\native\zlib.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\zlib.1.2.8.1\build\native\zlib.targets'))" />
+    <Error Condition="!Exists('..\..\packages\openssl.1.0.1.21\build\native\openssl.props')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\openssl.1.0.1.21\build\native\openssl.props'))" />
+    <Error Condition="!Exists('..\..\packages\openssl.1.0.1.21\build\native\openssl.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\openssl.1.0.1.21\build\native\openssl.targets'))" />
+    <Error Condition="!Exists('..\..\packages\boost.1.71.0.0\build\boost.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\boost.1.71.0.0\build\boost.targets'))" />
+    <Error Condition="!Exists('..\..\packages\boost_system-vc141.1.71.0.0\build\boost_system-vc141.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\boost_system-vc141.1.71.0.0\build\boost_system-vc141.targets'))" />
+    <Error Condition="!Exists('..\..\packages\boost_date_time-vc141.1.71.0.0\build\boost_date_time-vc141.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\boost_date_time-vc141.1.71.0.0\build\boost_date_time-vc141.targets'))" />
+    <Error Condition="!Exists('..\..\packages\boost_regex-vc141.1.71.0.0\build\boost_regex-vc141.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\boost_regex-vc141.1.71.0.0\build\boost_regex-vc141.targets'))" />
   </Target>
 </Project>
