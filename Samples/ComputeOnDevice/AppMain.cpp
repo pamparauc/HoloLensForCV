@@ -237,9 +237,9 @@ namespace ComputeOnDevice
 		cv::Mat hsv;
 		cv::cvtColor(Image, hsv, cv::COLOR_RGB2HSV);
 		Mat mask1;
-		// Creating masks to detect the upper and lower blue color.
-		inRange(hsv, Scalar(110, 50, 50), Scalar(130, 255, 255), mask1);
-		Image.setTo(Scalar(255, 0, 0), mask1);
+		// Creating masks to detect the upper and lower red color.
+		inRange(hsv, Scalar(0, 50, 20), Scalar(5, 255, 255), mask1);
+		Image.setTo(Scalar(0, 0, 255), mask1); // to Blue
 	}
 
 	void AppMain::Canny(cv::Mat& original, cv::Mat& blurred, cv::Mat& canny)
@@ -396,23 +396,23 @@ namespace ComputeOnDevice
 			return;
 		}
 
-		//inputOutput=modifyContrastByValue(inputOutput.clone(), 1-document["increase-contrast"].GetDouble()/100);
-			//if (document["apply-edge-detection"].GetBool())
-			//{
-			//	cv::Mat blurred, canny;
-			//	Canny(inputOutput.clone(), blurred, canny);
-			//	inputOutput = blurred.clone();
-			//}
+		inputOutput=modifyContrastByValue(inputOutput.clone(), 1-document["increase-contrast"].GetDouble()/100);
+			if (document["apply-edge-detection"].GetBool())
+			{
+				cv::Mat blurred, canny;
+				Canny(inputOutput.clone(), blurred, canny);
+				inputOutput = blurred.clone();
+			}
 
-			std::string st = document["replace-color"]["initial"]["R"].GetString();
-			int R = std::atoi(st.c_str());
-			int G = atoi(document["replace-color"]["initial"]["G"].GetString());
-			int	B = atoi(document["replace-color"]["initial"]["B"].GetString());
-			int Rfinal = atoi(document["replace-color"]["final"]["R"].GetString()), Gfinal = atoi(document["replace-color"]["final"]["G"].GetString()), 
-				Bfinal = atoi(document["replace-color"]["final"]["B"].GetString());
-			int H=0, S=0, V=0;
-			determineHSVvaluesForRGBColor(Rfinal, Gfinal, Bfinal, H, S, V);
-			changeColor(inputOutput, R, G, B, H, S, V);
+			//std::string st = document["replace-color"]["initial"]["R"].GetString();
+			//int R = std::atoi(st.c_str());
+			//int G = atoi(document["replace-color"]["initial"]["G"].GetString());
+			//int	B = atoi(document["replace-color"]["initial"]["B"].GetString());
+			//int Rfinal = atoi(document["replace-color"]["final"]["R"].GetString()), Gfinal = atoi(document["replace-color"]["final"]["G"].GetString()), 
+			//	Bfinal = atoi(document["replace-color"]["final"]["B"].GetString());
+			//int H=0, S=0, V=0;
+			//determineHSVvaluesForRGBColor(Rfinal, Gfinal, Bfinal, H, S, V);
+			changeColor(inputOutput, 0,0,0,0,0,0);
 
 	}
 
