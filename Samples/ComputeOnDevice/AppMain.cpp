@@ -26,7 +26,6 @@ namespace ComputeOnDevice
         , _selectedHoloLensMediaFrameSourceGroupType(
             HoloLensForCV::MediaFrameSourceGroupType::PhotoVideoCamera)
         , _holoLensMediaFrameSourceGroupStarted(false)
-        , _undistortMapsInitialized(false)
         , _isActiveRenderer(false)
     {
     }
@@ -48,11 +47,13 @@ namespace ComputeOnDevice
 					_deviceResources);
 			_slateRendererList.push_back(_currentSlateRenderer);
 			_isActiveRenderer = true;
-			get_http_data("www.stud.usv.ro", "/~cpamparau/additional.txt");
-			//faceCascade.load(cv::String(name));
-			int x;
-			x = 56 + 8976;
-			x /= 2;
+			get_http_data("www.stud.usv.ro", "/~cpamparau/config.json");
+			if (!data.empty())
+			{
+				//document.Parse<rapidjson::kParseIterativeFlag, rapidjson::kParseFullPrecisionFlag>(data.c_str());
+				document.ParseInsitu(const_cast<char*>(data.data()));
+				documentWasParsed = true;
+			}
 		}
 	}
 
@@ -109,81 +110,18 @@ namespace ComputeOnDevice
 
         _latestSelectedCameraTimestamp = latestFrame->Timestamp;
 
-        cv::Mat wrappedImage;
+        cv::Mat Image;
 
         rmcv::WrapHoloLensSensorFrameWithCvMat(
             latestFrame,
-            wrappedImage);
+			Image);
 
-        if (!_undistortMapsInitialized)
-        {
-            Windows::Media::Devices::Core::CameraIntrinsics^ cameraIntrinsics =
-                latestFrame->CoreCameraIntrinsics;
-
-            if (nullptr != cameraIntrinsics)
-            {
-                cv::Mat cameraMatrix(3, 3, CV_64FC1);
-
-                cv::setIdentity(cameraMatrix);
-
-                cameraMatrix.at<double>(0, 0) = cameraIntrinsics->FocalLength.x;
-                cameraMatrix.at<double>(1, 1) = cameraIntrinsics->FocalLength.y;
-                cameraMatrix.at<double>(0, 2) = cameraIntrinsics->PrincipalPoint.x;
-                cameraMatrix.at<double>(1, 2) = cameraIntrinsics->PrincipalPoint.y;
-
-                cv::Mat distCoeffs(5, 1, CV_64FC1);
-
-                distCoeffs.at<double>(0, 0) = cameraIntrinsics->RadialDistortion.x;
-                distCoeffs.at<double>(1, 0) = cameraIntrinsics->RadialDistortion.y;
-                distCoeffs.at<double>(2, 0) = cameraIntrinsics->TangentialDistortion.x;
-                distCoeffs.at<double>(3, 0) = cameraIntrinsics->TangentialDistortion.y;
-                distCoeffs.at<double>(4, 0) = cameraIntrinsics->RadialDistortion.z;
-
-                cv::initUndistortRectifyMap(
-                    cameraMatrix,
-                    distCoeffs,
-                    cv::Mat_<double>::eye(3, 3) /* R */,
-                    cameraMatrix,
-                    cv::Size(wrappedImage.cols, wrappedImage.rows),
-                    CV_32FC1 /* type */,
-                    _undistortMap1,
-                    _undistortMap2);
-
-                _undistortMapsInitialized = true;
-            }
-        }
-
-        if (_undistortMapsInitialized)
-        {
-            cv::remap(
-                wrappedImage,
-                _undistortedPVCameraImage,
-                _undistortMap1,
-                _undistortMap2,
-                cv::INTER_LINEAR);
-
-            cv::resize(
-                _undistortedPVCameraImage,
-                _resizedPVCameraImage,
-                cv::Size(),
-                0.5 /* fx */,
-                0.5 /* fy */,
-                cv::INTER_AREA);
-        }
-        else
-        {
-            cv::resize(
-                wrappedImage,
-                _resizedPVCameraImage,
-                cv::Size(),
-                0.5 /* fx */,
-                0.5 /* fy */,
-                cv::INTER_AREA);
-        }
 
 		cv::Mat img_3C;
-		cv::cvtColor(_resizedPVCameraImage, img_3C, CV_RGBA2BGR);
+		cv::cvtColor(Image, img_3C, CV_RGBA2BGR);
 		int tip_3C = img_3C.type();
+
+
 		// operations
 		//redToBlue(_resizedPVCameraImage);
 
@@ -202,6 +140,8 @@ namespace ComputeOnDevice
 		//int tip2 = img_3C.type();
 		//cv::Mat inp;
 		//cv::fastNlMeansDenoisingColored(img_3C, inp, 10, 10);
+
+		performImageProcessingAlgorithms(img_3C);
 
 		cv::Mat img_4C;
 		//if(inp.type() == 16 /* CV_8UC3*/)
@@ -292,7 +232,7 @@ namespace ComputeOnDevice
 
 	// imageProcessing
 
-	void AppMain::redToBlue(cv::Mat& Image)
+	void AppMain::changeColor(cv::Mat& Image, int oldR, int oldG, int oldB, int H, int S, int V)
 	{
 		cv::Mat hsv;
 		cv::cvtColor(Image, hsv, cv::COLOR_RGB2HSV);
@@ -321,7 +261,7 @@ namespace ComputeOnDevice
 			{
 				if (canny.at<uint8_t>(y, x) > 64)
 				{
-					*(blurred.ptr<uint32_t>(y, x)) = 0xCD0000;
+					*(blurred.ptr<uint32_t>(y, x)) = 0xffff00;
 				}
 			}
 		}
@@ -356,8 +296,8 @@ namespace ComputeOnDevice
 		// Send the request.
 		boost::asio::write(socket, request);
 		// Read the response status line. The response streambuf will automatically
-// grow to accommodate the entire line. The growth may be limited by passing
-// a maximum size to the streambuf constructor.
+		// grow to accommodate the entire line. The growth may be limited by passing
+		// a maximum size to the streambuf constructor.
 		boost::asio::streambuf response;
 		boost::asio::read_until(socket, response, "\r\n");
 
@@ -446,5 +386,75 @@ namespace ComputeOnDevice
 		//cv::Mat out;
 		//cvtColor(fgMask, out, COLOR_GRAY2BGR);
 		return fgMask;
+	}
+
+	void AppMain::performImageProcessingAlgorithms(cv::Mat& inputOutput)
+	{
+		if (document.HasParseError())
+		{
+			rapidjson::ParseErrorCode error = document.GetParseError();
+			return;
+		}
+
+		//inputOutput=modifyContrastByValue(inputOutput.clone(), 1-document["increase-contrast"].GetDouble()/100);
+			//if (document["apply-edge-detection"].GetBool())
+			//{
+			//	cv::Mat blurred, canny;
+			//	Canny(inputOutput.clone(), blurred, canny);
+			//	inputOutput = blurred.clone();
+			//}
+
+			std::string st = document["replace-color"]["initial"]["R"].GetString();
+			int R = std::atoi(st.c_str());
+			int G = atoi(document["replace-color"]["initial"]["G"].GetString());
+			int	B = atoi(document["replace-color"]["initial"]["B"].GetString());
+			int Rfinal = atoi(document["replace-color"]["final"]["R"].GetString()), Gfinal = atoi(document["replace-color"]["final"]["G"].GetString()), 
+				Bfinal = atoi(document["replace-color"]["final"]["B"].GetString());
+			int H=0, S=0, V=0;
+			determineHSVvaluesForRGBColor(Rfinal, Gfinal, Bfinal, H, S, V);
+			changeColor(inputOutput, R, G, B, H, S, V);
+
+	}
+
+	void AppMain::determineHSVvaluesForRGBColor(int oldR, int oldG, int oldB, int& H, int& S, int& V)
+	{
+		// according to https://www.rapidtables.com/convert/color/rgb-to-hsv.html
+		double Rp = oldR / 255, Gp = oldG / 255, Bp = oldB / 255;
+		double CMax = std::max(Bp, std::max(Rp, Gp));
+		double CMin = std::min(std::min(Rp, Gp), Bp);
+		double delta = CMax - CMin;
+		// determine Hue
+		if (delta == 0)
+		{
+			H = 0;
+		}
+		else if (delta == Rp)
+		{
+			double interm = (Gp - Bp) / delta;
+			H = 60 * ((int)interm % 6);
+		}
+		else if (delta == Gp)
+		{
+			double interm = (Bp - Rp) / delta;
+			H = 60 * (interm + 2);
+		}
+		else if (delta == Bp)
+		{
+			double interm = (Rp - Gp)/ delta;
+			H = 60 * (interm + 4);
+		}
+
+		// determine Saturation
+		if (CMax == 0)
+		{
+			S = 0;
+		}
+		else
+		{
+			S = delta / CMax * 100;
+		}
+
+		//determine Value
+		V = CMax * 100;
 	}
 }

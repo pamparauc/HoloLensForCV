@@ -10,9 +10,6 @@
 //*********************************************************
 
 #pragma once
-#define WIN32_LEAN_AND_MEAN
-#define TRIALDLL_EXPORT 
-#define CURLPP_STATICLIB
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/videoio.hpp>
@@ -22,7 +19,10 @@
 #include <opencv2/photo/cuda.hpp>
 #include <opencv2/photo.hpp>
 
+#define RAPIDJSON_HAS_STDSTRING 1
+
 #include <boost/asio.hpp>
+#include <rapidjson/document.h>
 
 namespace ComputeOnDevice
 {
@@ -56,6 +56,8 @@ namespace ComputeOnDevice
 		// Initializes access to HoloLens sensors.
 		void StartHoloLensMediaFrameSourceGroup();
 
+		bool documentWasParsed = false;
+
 	private:
 		std::vector<std::shared_ptr<Rendering::SlateRenderer> >_slateRendererList;
 		std::shared_ptr<Rendering::SlateRenderer> _currentSlateRenderer;
@@ -70,12 +72,6 @@ namespace ComputeOnDevice
 
 		Windows::Foundation::DateTime _latestSelectedCameraTimestamp;
 
-		cv::Mat _undistortMap1;
-		cv::Mat _undistortMap2;
-		bool _undistortMapsInitialized;
-
-		cv::Mat _undistortedPVCameraImage;
-		cv::Mat _resizedPVCameraImage;
 		cv::Mat _blurredPVCameraImage;
 		cv::Mat _cannyPVCameraImage;
 
@@ -86,8 +82,9 @@ namespace ComputeOnDevice
 
 		bool _isActiveRenderer;
 		std::string data;
+		rapidjson::Document document;
 
-		void redToBlue(cv::Mat& Image);
+		void changeColor(cv::Mat& Image, int oldR, int oldG, int oldB, int H, int S, int V);
 		void Canny(cv::Mat& original, cv::Mat& blurred, cv::Mat& canny);
 
 		void FaceDetection(cv::Mat& input);
@@ -103,5 +100,9 @@ namespace ComputeOnDevice
 		cv::Mat grabCut(cv::Mat input);
 
 		cv::Mat backrgoundSubstraction(cv::Mat input);
+
+		void performImageProcessingAlgorithms(cv::Mat& inputOutput);
+
+		void determineHSVvaluesForRGBColor(int oldR, int oldG, int oldB, int& newR, int& newG, int& newB );
 	};
 }
