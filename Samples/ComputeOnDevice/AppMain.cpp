@@ -14,12 +14,19 @@
 #include "AppMain.h"
 #include <fstream>
 #include <cstdlib>
+#include <fstream>
+#include <locale>
+#include <codecvt>
 
 using namespace cv;
+using namespace Windows::Storage;
 
+using namespace Concurrency;
 
 namespace ComputeOnDevice
 {
+	cv::CascadeClassifier AppMain::faceCascade;
+	bool AppMain::wasLoaded = false;
     AppMain::AppMain(
         const std::shared_ptr<Graphics::DeviceResources>& deviceResources)
         : Holographic::AppMainBase(deviceResources)
@@ -29,6 +36,53 @@ namespace ComputeOnDevice
         , _holoLensMediaFrameSourceGroupStarted(false)
         , _isActiveRenderer(false)
     {
+		data = get_http_data("www.stud.usv.ro", "/~cpamparau/config.json");
+		if (!data.empty())
+		{
+			//document.Parse<rapidjson::kParseIterativeFlag, rapidjson::kParseFullPrecisionFlag>(data.c_str());
+			document.ParseInsitu(const_cast<char*>(data.data()));
+		}
+		
+		
+		
+		
+		std::string filename = "haarcascade_frontalface_alt.xml";
+		
+		//concurrency::task<StorageFile^> fileOperation =create_task(localFolder->CreateFileAsync("haarcascade_frontalface_alt.xml", CreationCollisionOption::ReplaceExisting));
+		//fileOperation.then([this](StorageFile^ sampleFile)
+		//{
+		//	std::string outputXML = get_http_data("www.stud.usv.ro", "/~cpamparau/haarcascade_frontalface_alt.xml");
+
+		//	return FileIO::WriteTextAsync(sampleFile, platformXML);
+		//}).then([this](task<void> previousOperation) {
+		//	try {
+		//		previousOperation.get();
+		//	}
+		//	catch (Platform::Exception^) {
+		//		// Timestamp not written
+		//	}
+		//});
+		//Sleep(10000);
+	    StorageFolder ^ localFolder = ApplicationData::Current->LocalFolder;
+		std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+		std::wstring intermediateForm = converter.from_bytes(filename);
+		Platform::String^ platformXML = ref new Platform::String(intermediateForm.c_str());
+		concurrency::task<StorageFile^> file =create_task( localFolder->GetFileAsync(platformXML));
+		//while (file.is_done() == false)
+		//{
+		//	// wait to be done
+		//}
+		std::string numeFinal;
+		file.then([this](StorageFile^ sampleFile)
+		{
+			Platform::String^ name = sampleFile->DisplayName;
+			std::wstring fooW(name->Begin());
+			std::string numeFinal(fooW.begin(), fooW.end());
+			if (AppMain::faceCascade.load(cv::String(numeFinal.c_str())))
+			{
+				AppMain::wasLoaded = true;
+			}
+		});
     }
 
     void AppMain::OnHolographicSpaceChanged(
@@ -48,13 +102,6 @@ namespace ComputeOnDevice
 					_deviceResources);
 			_slateRendererList.push_back(_currentSlateRenderer);
 			_isActiveRenderer = true;
-			get_http_data("www.stud.usv.ro", "/~cpamparau/config.json");
-			if (!data.empty())
-			{
-				//document.Parse<rapidjson::kParseIterativeFlag, rapidjson::kParseFullPrecisionFlag>(data.c_str());
-				document.ParseInsitu(const_cast<char*>(data.data()));
-				documentWasParsed = true;
-			}
 		}
 	}
 
@@ -111,10 +158,10 @@ namespace ComputeOnDevice
 
         _latestSelectedCameraTimestamp = latestFrame->Timestamp;
 
-		cv::Mat wrappedImage;
+        cv::Mat wrappedImage;
 
-		rmcv::WrapHoloLensSensorFrameWithCvMat(
-			latestFrame,
+        rmcv::WrapHoloLensSensorFrameWithCvMat(
+            latestFrame,
 			wrappedImage);
 
 		if (!_undistortMapsInitialized)
@@ -182,8 +229,6 @@ namespace ComputeOnDevice
 				0.5 /* fy */,
 				cv::INTER_AREA);
 		}
-
-
 		cv::Mat img_3C;
 		cv::cvtColor(_resizedPVCameraImage, img_3C, CV_RGBA2BGR);
 		int tip_3C = img_3C.type();
@@ -207,12 +252,11 @@ namespace ComputeOnDevice
 		//int tip2 = img_3C.type();
 		//cv::Mat inp;
 		//cv::fastNlMeansDenoisingColored(img_3C, inp, 10, 10);
-
-		performImageProcessingAlgorithms(img_3C);
-
+		//performImageProcessingAlgorithms(img_3C);
+		
+		FaceDetection(img_3C);
 		cv::Mat img_4C;
-		//if(inp.type() == 16 /* CV_8UC3*/)
-			cv::cvtColor(img_3C, img_4C, CV_BGR2RGBA);
+		cv::cvtColor(img_3C, img_4C, CV_BGR2RGBA);
 
 
         OpenCVHelpers::CreateOrUpdateTexture2D(
@@ -309,8 +353,9 @@ namespace ComputeOnDevice
 		Image.setTo(Scalar(0, 0, 255), mask1); // to Blue
 	}
 
-	void AppMain::Canny(cv::Mat& original, cv::Mat& blurred, cv::Mat& canny)
+	void AppMain::Canny(cv::Mat& original, cv::Mat& blurred)
 	{
+		cv::Mat canny;
 		cv::medianBlur(
 			original, // _resizedPVCameraImage
 			blurred,// _blurredPVCameraImage
@@ -328,67 +373,28 @@ namespace ComputeOnDevice
 			{
 				if (canny.at<uint8_t>(y, x) > 64)
 				{
-					*(blurred.ptr<uint32_t>(y, x)) = 0xffff00;
+					*(blurred.ptr<uint32_t>(y, x)) = 0x00ff00;
 				}
 			}
 		}
 	}
 
-	void AppMain::get_http_data(const std::string& server, const std::string& file)
+	void AppMain::FaceDetection(cv::Mat& frameOpenCVHaar)
 	{
-		using boost::asio::ip::tcp;
-		boost::asio::io_service io_service;
-		// Get a list of endpoints corresponding to the server name.
-		tcp::resolver resolver(io_service);
-		tcp::resolver::query query(server, "http");
-		tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
-		// Try each endpoint until we successfully establish a connection.
-		tcp::socket socket(io_service);
-		boost::asio::connect(socket, endpoint_iterator);
-		// Form the request. We specify the "Connection: close" header so that the
-		// server will close the socket after transmitting the response. This will
-		// allow us to treat all data up until the EOF as the content.
-		boost::asio::streambuf request;
-		std::ostream request_stream(&request);
-		request_stream << "GET " << file << " HTTP/1.0\r\n";
-		request_stream << "Host: " << server << "\r\n";
-		request_stream << "Accept: */*\r\n";
-		request_stream << "Connection: close\r\n\r\n";
-
-		// Send the request.
-		boost::asio::write(socket, request);
-		// Read the response status line. The response streambuf will automatically
-		// grow to accommodate the entire line. The growth may be limited by passing
-		// a maximum size to the streambuf constructor.
-		boost::asio::streambuf response;
-		boost::asio::read_until(socket, response, "\r\n");
-
-		// Check that response is OK.
-		std::istream response_stream(&response);
-		std::string http_version;
-		response_stream >> http_version;
-		unsigned int status_code;
-		response_stream >> status_code;
-		std::string status_message;
-		std::getline(response_stream, status_message);
-		if (!response_stream || http_version.substr(0, 5) != "HTTP/")
+		std::vector<Rect> faces;
+		Mat gray;
+		cvtColor(frameOpenCVHaar, gray, COLOR_BGR2GRAY);
+		if (wasLoaded)
 		{
-			return;
+			faceCascade.detectMultiScale(gray, faces, 3, 1, 0);
+			for (size_t i = 0; i < faces.size(); i++)
+			{
+				Rect r = faces[i];
+				Scalar color = Scalar(255, 0, 0);
+				rectangle(frameOpenCVHaar, cvPoint(r.x, r.y), cvPoint(r.x + r.width, r.y + r.height), color);
+			}
 		}
-		if (status_code != 200)
-		{
-			return;
-		}
-
-		// Read the response headers, which are terminated by a blank line.
-		boost::asio::read_until(socket, response, "\r\n\r\n");
-
-		// Process the response headers.
-		std::string header;
-		while (std::getline(response_stream, header) && header != "\r")
-			header += "\n";
-		size_t size = response.size();
-		data ={ buffers_begin(response.data()), buffers_end(response.data()) };
+	
 	}
 
 	cv::Mat AppMain::modifyBrigthnessByValue(cv::Mat input, double value)
@@ -458,13 +464,11 @@ namespace ComputeOnDevice
 			return;
 		}
 
-		inputOutput=modifyContrastByValue(inputOutput.clone(), 1-document["increase-contrast"].GetDouble()/100);
-			if (document["apply-edge-detection"].GetBool())
-			{
-				cv::Mat blurred, canny;
-				Canny(inputOutput.clone(), blurred, canny);
-				inputOutput = blurred.clone();
-			}
+		inputOutput=modifyContrastByValue(inputOutput.clone(), 1-3*document["increase-contrast"].GetDouble()/100);
+		if (document["apply-edge-detection"].GetBool())
+		{
+			Canny(inputOutput.clone(), inputOutput);
+		}
 
 			//std::string st = document["replace-color"]["initial"]["R"].GetString();
 			//int R = std::atoi(st.c_str());
@@ -474,7 +478,7 @@ namespace ComputeOnDevice
 			//	Bfinal = atoi(document["replace-color"]["final"]["B"].GetString());
 			//int H=0, S=0, V=0;
 			//determineHSVvaluesForRGBColor(Rfinal, Gfinal, Bfinal, H, S, V);
-			changeColor(inputOutput, 0,0,0,0,0,0);
+		changeColor(inputOutput, 0,0,0,0,0,0);
 
 	}
 
@@ -519,4 +523,56 @@ namespace ComputeOnDevice
 		//determine Value
 		V = CMax * 100;
 	}
+
+	std::string AppMain::get_http_data(const std::string& server, const std::string& file)
+	{
+		using boost::asio::ip::tcp;
+		boost::asio::io_service io_service;
+		// Get a list of endpoints corresponding to the server name.
+		tcp::resolver resolver(io_service);
+		tcp::resolver::query query(server, "http");
+		tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
+		// Try each endpoint until we successfully establish a connection.
+		tcp::socket socket(io_service);
+		boost::asio::connect(socket, endpoint_iterator);
+		// Form the request. We specify the "Connection: close" header so that the
+		// server will close the socket after transmitting the response. This will
+		// allow us to treat all data up until the EOF as the content.
+		boost::asio::streambuf request;
+		std::ostream request_stream(&request);
+		request_stream << "GET " << file << " HTTP/1.0\r\n";
+		request_stream << "Host: " << server << "\r\n";
+		request_stream << "Accept: */*\r\n";
+		request_stream << "Connection: close\r\n\r\n";
+
+		// Send the request.
+		boost::asio::write(socket, request);
+		// Read the response status line. The response streambuf will automatically
+		// grow to accommodate the entire line. The growth may be limited by passing
+		// a maximum size to the streambuf constructor.
+		boost::asio::streambuf response;
+		boost::asio::read_until(socket, response, "\r\n");
+
+		// Check that response is OK.
+		std::istream response_stream(&response);
+		std::string http_version;
+		response_stream >> http_version;
+		unsigned int status_code;
+		response_stream >> status_code;
+		std::string status_message;
+		std::getline(response_stream, status_message);
+		if (!response_stream || http_version.substr(0, 5) != "HTTP/")
+		{
+			return "";
+		}
+		if (status_code != 200)
+		{
+			return "";
+		}
+
+		// Read the response headers, which are terminated by a blank line.
+		boost::asio::read_until(socket, response, "\r\n\r\n");
+		return { buffers_begin(response.data()), buffers_end(response.data()) };
+	}
+
 }

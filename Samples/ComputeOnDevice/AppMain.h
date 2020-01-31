@@ -18,11 +18,11 @@
 #include <opencv2/objdetect.hpp>
 #include <opencv2/photo/cuda.hpp>
 #include <opencv2/photo.hpp>
+#include <ppltasks.h>
+#include <rapidjson/document.h>
+#include <boost/asio.hpp>
 
 #define RAPIDJSON_HAS_STDSTRING 1
-
-#include <boost/asio.hpp>
-#include <rapidjson/document.h>
 
 namespace ComputeOnDevice
 {
@@ -52,11 +52,23 @@ namespace ComputeOnDevice
 
 		virtual void InitDisplay() override;
 
+		static cv::CascadeClassifier faceCascade;
+
+		static Windows::Media::FaceAnalysis::FaceDetector^ m_FaceDetector;
+
+		static bool wasLoaded ;
+
 	private:
 		// Initializes access to HoloLens sensors.
 		void StartHoloLensMediaFrameSourceGroup();
 
 		bool documentWasParsed = false;
+
+		std::string data;
+		rapidjson::Document document;
+
+
+		std::string get_http_data(const std::string& server, const std::string& file);
 
 	private:
 		std::vector<std::shared_ptr<Rendering::SlateRenderer> >_slateRendererList;
@@ -72,7 +84,6 @@ namespace ComputeOnDevice
 
 		Windows::Foundation::DateTime _latestSelectedCameraTimestamp;
 
-
 		cv::Mat _undistortMap1;
 		cv::Mat _undistortMap2;
 		bool _undistortMapsInitialized;
@@ -82,21 +93,18 @@ namespace ComputeOnDevice
 		cv::Mat _blurredPVCameraImage;
 		cv::Mat _cannyPVCameraImage;
 
-		cv::CascadeClassifier faceCascade;
-
+		
+		
 		std::vector<Rendering::Texture2DPtr> _visualizationTextureList;
 		Rendering::Texture2DPtr _currentVisualizationTexture;
 
 		bool _isActiveRenderer;
-		std::string data;
-		rapidjson::Document document;
+		
 
 		void changeColor(cv::Mat& Image, int oldR, int oldG, int oldB, int H, int S, int V);
-		void Canny(cv::Mat& original, cv::Mat& blurred, cv::Mat& canny);
+		void Canny(cv::Mat& original, cv::Mat& blurred);
 
 		void FaceDetection(cv::Mat& input);
-
-		void get_http_data(const std::string& server, const std::string& file);
 
 		cv::Mat modifyBrigthnessByValue(cv::Mat input, double value);
 
