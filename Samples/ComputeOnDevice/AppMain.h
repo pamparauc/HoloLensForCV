@@ -72,6 +72,13 @@ namespace ComputeOnDevice
 
 		Windows::Foundation::DateTime _latestSelectedCameraTimestamp;
 
+
+		cv::Mat _undistortMap1;
+		cv::Mat _undistortMap2;
+		bool _undistortMapsInitialized;
+
+		cv::Mat _undistortedPVCameraImage;
+		cv::Mat _resizedPVCameraImage;
 		cv::Mat _blurredPVCameraImage;
 		cv::Mat _cannyPVCameraImage;
 
@@ -88,8 +95,6 @@ namespace ComputeOnDevice
 		void Canny(cv::Mat& original, cv::Mat& blurred, cv::Mat& canny);
 
 		void FaceDetection(cv::Mat& input);
-
-		void detectFaces(cv::Mat& frameOpenCVHaar, int inHeight = 300, int inWidth = 0);
 
 		void get_http_data(const std::string& server, const std::string& file);
 

@@ -25,6 +25,7 @@ namespace ComputeOnDevice
         : Holographic::AppMainBase(deviceResources)
         , _selectedHoloLensMediaFrameSourceGroupType(
             HoloLensForCV::MediaFrameSourceGroupType::PhotoVideoCamera)
+		, _undistortMapsInitialized(false)
         , _holoLensMediaFrameSourceGroupStarted(false)
         , _isActiveRenderer(false)
     {
@@ -110,15 +111,81 @@ namespace ComputeOnDevice
 
         _latestSelectedCameraTimestamp = latestFrame->Timestamp;
 
-        cv::Mat Image;
+		cv::Mat wrappedImage;
 
-        rmcv::WrapHoloLensSensorFrameWithCvMat(
-            latestFrame,
-			Image);
+		rmcv::WrapHoloLensSensorFrameWithCvMat(
+			latestFrame,
+			wrappedImage);
+
+		if (!_undistortMapsInitialized)
+		{
+			Windows::Media::Devices::Core::CameraIntrinsics^ cameraIntrinsics =
+				latestFrame->CoreCameraIntrinsics;
+
+			if (nullptr != cameraIntrinsics)
+			{
+				cv::Mat cameraMatrix(3, 3, CV_64FC1);
+
+				cv::setIdentity(cameraMatrix);
+
+				cameraMatrix.at<double>(0, 0) = cameraIntrinsics->FocalLength.x;
+				cameraMatrix.at<double>(1, 1) = cameraIntrinsics->FocalLength.y;
+				cameraMatrix.at<double>(0, 2) = cameraIntrinsics->PrincipalPoint.x;
+				cameraMatrix.at<double>(1, 2) = cameraIntrinsics->PrincipalPoint.y;
+
+				cv::Mat distCoeffs(5, 1, CV_64FC1);
+
+				distCoeffs.at<double>(0, 0) = cameraIntrinsics->RadialDistortion.x;
+				distCoeffs.at<double>(1, 0) = cameraIntrinsics->RadialDistortion.y;
+				distCoeffs.at<double>(2, 0) = cameraIntrinsics->TangentialDistortion.x;
+				distCoeffs.at<double>(3, 0) = cameraIntrinsics->TangentialDistortion.y;
+				distCoeffs.at<double>(4, 0) = cameraIntrinsics->RadialDistortion.z;
+
+				cv::initUndistortRectifyMap(
+					cameraMatrix,
+					distCoeffs,
+					cv::Mat_<double>::eye(3, 3) /* R */,
+					cameraMatrix,
+					cv::Size(wrappedImage.cols, wrappedImage.rows),
+					CV_32FC1 /* type */,
+					_undistortMap1,
+					_undistortMap2);
+
+				_undistortMapsInitialized = true;
+			}
+		}
+
+		if (_undistortMapsInitialized)
+		{
+			cv::remap(
+				wrappedImage,
+				_undistortedPVCameraImage,
+				_undistortMap1,
+				_undistortMap2,
+				cv::INTER_LINEAR);
+
+			cv::resize(
+				_undistortedPVCameraImage,
+				_resizedPVCameraImage,
+				cv::Size(),
+				0.5 /* fx */,
+				0.5 /* fy */,
+				cv::INTER_AREA);
+		}
+		else
+		{
+			cv::resize(
+				wrappedImage,
+				_resizedPVCameraImage,
+				cv::Size(),
+				0.5 /* fx */,
+				0.5 /* fy */,
+				cv::INTER_AREA);
+		}
 
 
 		cv::Mat img_3C;
-		cv::cvtColor(Image, img_3C, CV_RGBA2BGR);
+		cv::cvtColor(_resizedPVCameraImage, img_3C, CV_RGBA2BGR);
 		int tip_3C = img_3C.type();
 
 
@@ -265,11 +332,6 @@ namespace ComputeOnDevice
 				}
 			}
 		}
-	}
-
-	void AppMain::detectFaces(cv::Mat& frameOpenCVHaar, int inHeight, int inWidth)
-	{
-		
 	}
 
 	void AppMain::get_http_data(const std::string& server, const std::string& file)
