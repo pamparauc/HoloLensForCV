@@ -110,10 +110,6 @@ namespace ComputeOnDevice
 
 		cv::Mat modifyContrastByValue(cv::Mat input, double value);
 
-		cv::Mat grabCut(cv::Mat input);
-
-		cv::Mat backrgoundSubstraction(cv::Mat input);
-
 		void performImageProcessingAlgorithms(cv::Mat& inputOutput);
 
 		void determineHSVvaluesForRGBColor(int oldR, int oldG, int oldB, int& newR, int& newG, int& newB );

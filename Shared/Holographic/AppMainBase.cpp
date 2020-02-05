@@ -159,7 +159,7 @@ namespace Holographic
             // but if you change the StepTimer to use a fixed time step this code will
             // run as many times as needed to get to the current step.
             //
-            OnUpdate(pointerPose, float3{ 0.0f, 0.0f, -2.15f },
+            OnUpdate(pointerPose, float3{ 0.0f, 0.0f, -1.85f },
                 holographicFrame,
                 _timer);
         });

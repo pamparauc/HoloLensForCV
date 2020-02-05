@@ -124,7 +124,7 @@ namespace ComputeOnDevice
         // but if you change the StepTimer to use a fixed time step this code will
         // run as many times as needed to get to the current step.
         //
-        
+     
         for (auto& r : _slateRendererList)
         {
             r->Update(pointerPose, offset,
@@ -233,35 +233,15 @@ namespace ComputeOnDevice
 		cv::cvtColor(_resizedPVCameraImage, img_3C, CV_RGBA2BGR);
 		int tip_3C = img_3C.type();
 
+		performImageProcessingAlgorithms(img_3C);
 
-		// operations
-		//redToBlue(_resizedPVCameraImage);
-
-		//cv::Mat laplacian;
-		//cv::Laplacian(_resizedPVCameraImage, laplacian, 0, 1);
-
-		//Canny(_resizedPVCameraImage, _blurredPVCameraImage, _cannyPVCameraImage);
-
-		//detectFaces(img_3C);
-		//cv::Mat out;
-		/*out = modifyBrigthnessByValue(img_3C, -100);*/
-		//out = modifyContrastByValue(img_3C, 0.5);
-
-		//img_3C = grabCut(img_3C.clone());
-		//img_3C = backrgoundSubstraction(img_3C.clone());
-		//int tip2 = img_3C.type();
-		//cv::Mat inp;
-		//cv::fastNlMeansDenoisingColored(img_3C, inp, 10, 10);
-		//performImageProcessingAlgorithms(img_3C);
-		
-		FaceDetection(img_3C);
 		cv::Mat img_4C;
 		cv::cvtColor(img_3C, img_4C, CV_BGR2RGBA);
 
 
         OpenCVHelpers::CreateOrUpdateTexture2D(
             _deviceResources,
-			img_4C,   // muchii peste red->blue
+			img_4C,   
             _currentVisualizationTexture /*, CV_8UC1*/);
     }
 
@@ -415,47 +395,6 @@ namespace ComputeOnDevice
 		return output;
 	}
 
-	cv::Mat AppMain::grabCut(cv::Mat img)
-	{
-		cv::Mat1b markers(img.rows, img.cols);
-		markers.setTo(cv::GC_PR_BGD);
-		// cut out a small area in the middle of the image
-		int m_rows = 0.1 * img.rows;
-		int m_cols = 0.1 * img.cols;
-		// of course here you could also use cv::Rect() instead of cv::Range to select
-			// the region of interest
-		cv::Mat1b fg_seed = markers(cv::Range(img.rows / 2 - m_rows / 2, img.rows / 2 + m_rows / 2),
-				cv::Range(img.cols / 2 - m_cols / 2, img.cols / 2 + m_cols / 2));
-		// mark it as foreground
-		fg_seed.setTo(cv::GC_FGD);
-
-		// select first 5 rows of the image as background
-		cv::Mat1b bg_seed = markers(cv::Range(0, 5), cv::Range::all());
-		bg_seed.setTo(cv::GC_BGD);
-
-		cv::Mat bgd, fgd;
-		int iterations = 1;
-		cv::grabCut(img, markers, cv::Rect(), bgd, fgd, iterations, cv::GC_INIT_WITH_MASK);
-
-		// let's get all foreground and possible foreground pixels
-		cv::Mat1b mask_fgpf = (markers == cv::GC_FGD) | (markers == cv::GC_PR_FGD);
-		// and copy all the foreground-pixels to a temporary image
-		cv::Mat3b tmp = cv::Mat3b::zeros(img.rows, img.cols);
-		img.copyTo(tmp, mask_fgpf);
-		return (cv::Mat)tmp;
-	}
-
-	cv::Mat AppMain::backrgoundSubstraction(cv::Mat input)
-	{
-		Ptr<cv::BackgroundSubtractor> pBackSub = createBackgroundSubtractorKNN();
-		cv::Mat fgMask(input.rows, input.cols, CV_8UC3);
-		//update the background model
-		pBackSub->apply(input, fgMask);
-		//cv::Mat out;
-		//cvtColor(fgMask, out, COLOR_GRAY2BGR);
-		return fgMask;
-	}
-
 	void AppMain::performImageProcessingAlgorithms(cv::Mat& inputOutput)
 	{
 		if (document.HasParseError())
@@ -463,23 +402,45 @@ namespace ComputeOnDevice
 			rapidjson::ParseErrorCode error = document.GetParseError();
 			return;
 		}
-
-		inputOutput=modifyContrastByValue(inputOutput.clone(), 1-3*document["increase-contrast"].GetDouble()/100);
-		if (document["apply-edge-detection"].GetBool())
+		for (rapidjson::Value::ConstMemberIterator iter = document.MemberBegin(); iter < document.MemberEnd(); ++iter)
 		{
-			Canny(inputOutput.clone(), inputOutput);
+			std::string name = iter->name.GetString();
+			if (name.find("contrast") != std::string::npos)
+			{
+				inputOutput = modifyContrastByValue(inputOutput.clone(), 1 - document[name.c_str()].GetDouble() / 100); 
+			}
+			else if (name.find("edge") != std::string::npos)
+			{
+				Canny(inputOutput.clone(), inputOutput);
+			}
+			else if (name.find("color") != std::string::npos || name.find("replace") != std::string::npos)
+			{
+				// values for the color that needs to be relaced
+				rapidjson::Value::ConstMemberIterator initial = document[name.c_str()].MemberBegin();
+				std::string initial_name = initial->name.GetString();
+				int R = atoi(document[name.c_str()][initial_name.c_str()]["G"].GetString()),
+					G = atoi(document[name.c_str()][initial_name.c_str()]["G"].GetString()),
+					B = atoi(document[name.c_str()][initial_name.c_str()]["B"].GetString());
+
+				//values for the color that will be replaced
+				rapidjson::Value::ConstMemberIterator finall = ++initial;
+				std::string final_value = finall->name.GetString();
+				int Rfinal = atoi(document[name.c_str()][final_value.c_str()]["R"].GetString()), 
+					Gfinal = atoi(document[name.c_str()][final_value.c_str()]["G"].GetString()),
+					Bfinal = atoi(document[name.c_str()][final_value.c_str()]["B"].GetString());
+				int H = 0, S = 0, V = 0;
+				determineHSVvaluesForRGBColor(Rfinal, Gfinal, Bfinal, H, S, V);
+				changeColor(inputOutput, R, G, B, H, S, V);
+			}
+			else if (name.find("brigthness") != std::string::npos)
+			{
+				inputOutput = modifyBrigthnessByValue(inputOutput.clone(), document[name.c_str()].GetDouble());
+			}
+			else if (name.find("detection") != std::string::npos || name.find("face") != std::string::npos)
+			{
+				FaceDetection(inputOutput);
+			}
 		}
-
-			//std::string st = document["replace-color"]["initial"]["R"].GetString();
-			//int R = std::atoi(st.c_str());
-			//int G = atoi(document["replace-color"]["initial"]["G"].GetString());
-			//int	B = atoi(document["replace-color"]["initial"]["B"].GetString());
-			//int Rfinal = atoi(document["replace-color"]["final"]["R"].GetString()), Gfinal = atoi(document["replace-color"]["final"]["G"].GetString()), 
-			//	Bfinal = atoi(document["replace-color"]["final"]["B"].GetString());
-			//int H=0, S=0, V=0;
-			//determineHSVvaluesForRGBColor(Rfinal, Gfinal, Bfinal, H, S, V);
-		changeColor(inputOutput, 0,0,0,0,0,0);
-
 	}
 
 	void AppMain::determineHSVvaluesForRGBColor(int oldR, int oldG, int oldB, int& H, int& S, int& V)
@@ -572,6 +533,11 @@ namespace ComputeOnDevice
 
 		// Read the response headers, which are terminated by a blank line.
 		boost::asio::read_until(socket, response, "\r\n\r\n");
+
+		// Process the response headers.
+		std::string header;
+		while (std::getline(response_stream, header) && header != "\r")
+			header += "\n";
 		return { buffers_begin(response.data()), buffers_end(response.data()) };
 	}
 
