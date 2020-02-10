@@ -101,7 +101,7 @@ namespace ComputeOnDevice
 		bool _isActiveRenderer;
 		
 
-		void changeColor(cv::Mat& Image, int oldR, int oldG, int oldB, int H, int S, int V);
+		void changeColor(cv::Mat& Image, int oldR, int oldG, int oldB, int H);
 		void Canny(cv::Mat& original, cv::Mat& blurred);
 
 		void FaceDetection(cv::Mat& input);
@@ -110,8 +110,10 @@ namespace ComputeOnDevice
 
 		cv::Mat modifyContrastByValue(cv::Mat input, double value);
 
-		void performImageProcessingAlgorithms(cv::Mat& inputOutput);
+		void applyVisualFilters(cv::Mat& videoFrame);
 
-		void determineHSVvaluesForRGBColor(int oldR, int oldG, int oldB, int& newR, int& newG, int& newB );
+		void determineHSVvaluesForRGBColor(int oldR, int oldG, int oldB, int& H);
+
+		double getEuclidianDistance(int R1, int G1, int B1, int R2, int G2, int B2);
 	};
 }

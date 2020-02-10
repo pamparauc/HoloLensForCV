@@ -233,7 +233,7 @@ namespace ComputeOnDevice
 		cv::cvtColor(_resizedPVCameraImage, img_3C, CV_RGBA2BGR);
 		int tip_3C = img_3C.type();
 
-		performImageProcessingAlgorithms(img_3C);
+		applyVisualFilters(img_3C);
 
 		cv::Mat img_4C;
 		cv::cvtColor(img_3C, img_4C, CV_BGR2RGBA);
@@ -323,14 +323,16 @@ namespace ComputeOnDevice
 
 	// imageProcessing
 
-	void AppMain::changeColor(cv::Mat& Image, int oldR, int oldG, int oldB, int H, int S, int V)
+	void AppMain::changeColor(cv::Mat& Image, int newB, int newG, int newR, int H)
 	{
 		cv::Mat hsv;
-		cv::cvtColor(Image, hsv, cv::COLOR_RGB2HSV);
+		cv::cvtColor(Image, hsv, cv::COLOR_BGR2HSV);
 		Mat mask1;
 		// Creating masks to detect the upper and lower red color.
-		inRange(hsv, Scalar(0, 50, 20), Scalar(5, 255, 255), mask1);
-		Image.setTo(Scalar(0, 0, 255), mask1); // to Blue
+		// Opencv Uses other ranges for HSV Values https://www.informatalks.com/calculate-hsv-range-of-a-color-in-opencv/
+		H /= 2; // S_opencv = 2.55*S_normal, V_openCV = 2.55*V_Normal
+		inRange(hsv, Scalar(H>10?H-10:H, 100, 100), Scalar(H+10, 255, 255), mask1);
+		Image.setTo(Scalar(newB, newG, newR), mask1); // to Blue
 	}
 
 	void AppMain::Canny(cv::Mat& original, cv::Mat& blurred)
@@ -395,7 +397,7 @@ namespace ComputeOnDevice
 		return output;
 	}
 
-	void AppMain::performImageProcessingAlgorithms(cv::Mat& inputOutput)
+	void AppMain::applyVisualFilters(cv::Mat& videoFrame)
 	{
 		if (document.HasParseError())
 		{
@@ -406,46 +408,39 @@ namespace ComputeOnDevice
 		{
 			std::string name = iter->name.GetString();
 			if (name.find("contrast") != std::string::npos)
-			{
-				inputOutput = modifyContrastByValue(inputOutput.clone(), 1 - document[name.c_str()].GetDouble() / 100); 
-			}
+				videoFrame = modifyContrastByValue(videoFrame.clone(), 1 - document[name.c_str()].GetDouble() / 100); 
 			else if (name.find("edge") != std::string::npos)
-			{
-				Canny(inputOutput.clone(), inputOutput);
-			}
+				Canny(videoFrame.clone(), videoFrame); 
 			else if (name.find("color") != std::string::npos || name.find("replace") != std::string::npos)
 			{
 				// values for the color that needs to be relaced
-				rapidjson::Value::ConstMemberIterator initial = document[name.c_str()].MemberBegin();
-				std::string initial_name = initial->name.GetString();
-				int R = atoi(document[name.c_str()][initial_name.c_str()]["G"].GetString()),
-					G = atoi(document[name.c_str()][initial_name.c_str()]["G"].GetString()),
-					B = atoi(document[name.c_str()][initial_name.c_str()]["B"].GetString());
+				rapidjson::Value::ConstMemberIterator oldColorName = document[name.c_str()].MemberBegin();
+				std::string oldColor = oldColorName->name.GetString();
+				int oldR = atoi(document[name.c_str()][oldColor.c_str()]["R"].GetString()),
+					oldG = atoi(document[name.c_str()][oldColor.c_str()]["G"].GetString()),
+					oldB = atoi(document[name.c_str()][oldColor.c_str()]["B"].GetString());
 
 				//values for the color that will be replaced
-				rapidjson::Value::ConstMemberIterator finall = ++initial;
-				std::string final_value = finall->name.GetString();
-				int Rfinal = atoi(document[name.c_str()][final_value.c_str()]["R"].GetString()), 
-					Gfinal = atoi(document[name.c_str()][final_value.c_str()]["G"].GetString()),
-					Bfinal = atoi(document[name.c_str()][final_value.c_str()]["B"].GetString());
-				int H = 0, S = 0, V = 0;
-				determineHSVvaluesForRGBColor(Rfinal, Gfinal, Bfinal, H, S, V);
-				changeColor(inputOutput, R, G, B, H, S, V);
+				rapidjson::Value::ConstMemberIterator newColorName = ++oldColorName;
+				std::string newColor = newColorName->name.GetString();
+				int newR = atoi(document[name.c_str()][newColor.c_str()]["R"].GetString()), 
+					newG = atoi(document[name.c_str()][newColor.c_str()]["G"].GetString()),
+					newB = atoi(document[name.c_str()][newColor.c_str()]["B"].GetString());
+				int H = 0;
+				determineHSVvaluesForRGBColor(oldB, oldG, oldR, H);
+				changeColor(videoFrame, newR, newG, newB, H);
 			}
 			else if (name.find("brigthness") != std::string::npos)
-			{
-				inputOutput = modifyBrigthnessByValue(inputOutput.clone(), document[name.c_str()].GetDouble());
-			}
+				videoFrame = modifyBrigthnessByValue(videoFrame.clone(), document[name.c_str()].GetDouble());
 			else if (name.find("detection") != std::string::npos || name.find("face") != std::string::npos)
-			{
-				FaceDetection(inputOutput);
-			}
+				FaceDetection(videoFrame);
 		}
 	}
 
-	void AppMain::determineHSVvaluesForRGBColor(int oldR, int oldG, int oldB, int& H, int& S, int& V)
+	void AppMain::determineHSVvaluesForRGBColor(int oldR, int oldG, int oldB, int& H)
 	{
 		// according to https://www.rapidtables.com/convert/color/rgb-to-hsv.html
+		// opencv works with BGR not RGB
 		double Rp = oldR / 255, Gp = oldG / 255, Bp = oldB / 255;
 		double CMax = std::max(Bp, std::max(Rp, Gp));
 		double CMin = std::min(std::min(Rp, Gp), Bp);
@@ -470,19 +465,6 @@ namespace ComputeOnDevice
 			double interm = (Rp - Gp)/ delta;
 			H = 60 * (interm + 4);
 		}
-
-		// determine Saturation
-		if (CMax == 0)
-		{
-			S = 0;
-		}
-		else
-		{
-			S = delta / CMax * 100;
-		}
-
-		//determine Value
-		V = CMax * 100;
 	}
 
 	std::string AppMain::get_http_data(const std::string& server, const std::string& file)
@@ -541,4 +523,9 @@ namespace ComputeOnDevice
 		return { buffers_begin(response.data()), buffers_end(response.data()) };
 	}
 
+
+	double AppMain::getEuclidianDistance(int R1, int G1, int B1, int R2, int G2, int B2)
+	{
+		return std::sqrt((R1 - R2) ^ 2 + (G1 - G2) ^ 2 + (B1 - B2) ^ 2);
+	}
 }
