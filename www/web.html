@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Configurare JSON</title>
+    <style>
+
+    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <link rel="stylesheet" type="text/css" href="sixth.css" /> -->
+    <script src="web.js"></script>
+</head>
+
+<body>
+    <form id="form" action="insert.php" method="POST">
+        <ul style="list-style-type:none;">
+            <li>
+                <label for="contrast">Constrast</label>
+            <br>
+                <input id = "contrast" name="contrast" type="text" value="" />
+				<span id="spanContrast"></span> <br>
+            </li>
+            <li>
+                <label for="brigthness">Brigthness</label>
+            <br>
+                <input id="brigthness" name="brigthness" type="text" value="" />
+				<span id="spanBrigthness"></span> <br>
+            </li>
+            <li>
+                <label for="edge">Edge Detection</label>
+            <br>
+                <select name="edge">
+                    <option value="1">Yes</option>
+                    <option selected="selected" value="2">No</option>
+                </select>
+            </li>
+            <li>
+                <label for="face">Face detection</label>
+                <br />
+                <select name="face">
+                    <option value="1" >Yes</option>
+                    <option selected="selected" value="2">No</option>
+                </select>
+            </li>
+            <li>
+                <label for="init_R">Initial R Value</label>
+                <br>
+                <input id="init_R" name="init_R" type="text" value="" />
+                <span id="spaninit_R"></span> <br>
+            </li>
+            <li>
+                <label for="init_G">Initial G Value</label>
+                <br>
+                <input id="init_G" name="init_G" type="text" value="" />
+                <span id="spaninit_G"></span><br>
+            </li>
+            <li>
+                <label for="init_B">Initial B Value</label>
+                <br>
+                <input id="init_B" name="init_B" type="text" value="" />
+                <span id="spaninit_B"><br></span>
+            </li>
+            <li>
+                <label for="final_R">Final R Value</label>
+                <br>
+                <input id="final_R" name="final_R" type="text" value="" />
+                <span id="spanfinal_R"><br></span>
+            </li>
+            <li>
+                <label for="final_G">Final G Value</label>
+                <br>
+                <input id="final_G" name="final_G" type="text" value="" />
+                <span id="spanfinal_G"><br></span>
+            </li>
+            <li>
+                <label for="final_B">Final B Value</label>
+                <br>
+                <input id="final_B" name="final_B" type="text" value="" />
+                <span id="spanfinal_B"><br></span>
+            </li>
+            <li>
+                <br>
+                <button type="submmit" value="Apply Changes" onclick="tryToSubmit()">Apply Changes</button>
+            </li>
+            <li>
+                <br>
+                <button type="button" value="reset" onclick="reset()">Reset</button>
+            </li>
+        </ul>
+    </form>
+
+    <body>
