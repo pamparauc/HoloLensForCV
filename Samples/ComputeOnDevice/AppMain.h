@@ -106,14 +106,14 @@ namespace ComputeOnDevice
 
 		void FaceDetection(cv::Mat& input);
 
+		void HumanDetection(cv::Mat& input);
+
 		cv::Mat modifyBrigthnessByValue(cv::Mat input, double value);
 
 		cv::Mat modifyContrastByValue(cv::Mat input, double value);
 
 		void applyVisualFilters(cv::Mat& videoFrame);
 
-		void determineHSVvaluesForRGBColor(int oldR, int oldG, int oldB, int& H);
-
-		double getEuclidianDistance(int R1, int G1, int B1, int R2, int G2, int B2);
+		void determineHSVvaluesForRGBColor(int oldR, int oldG, int oldB, int& tolerance);
 	};
 }
