@@ -53,10 +53,10 @@ function tryToSubmit() {
 		markValidity("final_B", "spanfinal_B","",true);
 	}
 	
-    contrast = d("contrast")
-	if(!isNaN(contrast))
+    var contrast = d("contrast").value;
+	if(isNaN(contrast))
 	{
-		if( contrast.value != "" ) 
+		if( contrast != "" ) 
 		{
 			error = "Valoarea trebuie sa fie intre un numar intreg mai mare sau mai mic decat 1. De exemplu, 1.5=increase contrast 50%";
 			markValidity("contrast", "spanContrast",error,false);
@@ -66,8 +66,8 @@ function tryToSubmit() {
 		markValidity("contrast", "spanContrast","",true);
 	}
 	
-	brigthness = d("brigthness")
-	if(!isNaN(brigthness))
+	var brigthness = d("brigthness").value;
+	if(isNaN(brigthness))
 	{
 		if(brigthness.value != "")
 		{
@@ -83,9 +83,23 @@ function tryToSubmit() {
 	{
 		d("form").submit();
 	}
+	else
+		return false;
 
 }
 
+function clickColor(element)
+{
+	var myColor = new Array(3);
+    var hexColorString = document.getElementById(element).value;
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hexColorString);
+    if(result){
+        myColor[0] = parseInt(result[1], 16);
+        myColor[1]= parseInt(result[2], 16);
+        myColor[2] = parseInt(result[3], 16);
+    }  
+    console.log(myColor);
+}
 
 function isFieldRGBValid(id) {
     var id = d(id);

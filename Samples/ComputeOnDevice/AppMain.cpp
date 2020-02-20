@@ -378,7 +378,7 @@ namespace ComputeOnDevice
 			{
 				Rect r = faces[i]; 
 				Scalar color = Scalar(255, 0, 0);
-				rectangle(frameOpenCVHaar, cvPoint(r.x*0.5, r.y*0.5), cvPoint(r.x + r.width*0.5, r.y + r.height*0.5), color);
+				rectangle(frameOpenCVHaar, cvPoint(r.x, r.y), cvPoint(r.x + r.width, r.y + r.height), color);
 			}
 		}
 	
@@ -409,38 +409,37 @@ namespace ComputeOnDevice
 			rapidjson::ParseErrorCode error = document.GetParseError();
 			return;
 		}
-		//for (rapidjson::Value::ConstMemberIterator iter = document.MemberBegin(); iter < document.MemberEnd(); ++iter)
-		//{
-		//	std::string name = iter->name.GetString();
-		//	if (name.find("contrast") != std::string::npos)
-		//		videoFrame = modifyContrastByValue(videoFrame.clone(), 1 - document[name.c_str()].GetDouble() / 100); 
-		//	else if (name.find("edge") != std::string::npos)
-		//		Canny(videoFrame.clone(), videoFrame); 
-		//	else if (name.find("color") != std::string::npos || name.find("replace") != std::string::npos)
-		//	{
-		//		// values for the color that needs to be relaced
-		//		rapidjson::Value::ConstMemberIterator oldColorName = document[name.c_str()].MemberBegin();
-		//		std::string oldColor = oldColorName->name.GetString();
-		//		int oldR = atoi(document[name.c_str()][oldColor.c_str()]["R"].GetString()),
-		//			oldG = atoi(document[name.c_str()][oldColor.c_str()]["G"].GetString()),
-		//			oldB = atoi(document[name.c_str()][oldColor.c_str()]["B"].GetString());
+		for (rapidjson::Value::ConstMemberIterator iter = document.MemberBegin(); iter < document.MemberEnd(); ++iter)
+		{
+			std::string name = iter->name.GetString();
+			if (name.find("Contrast") != std::string::npos)
+				videoFrame = modifyContrastByValue(videoFrame.clone(), 1 - document[name.c_str()].GetDouble() / 100); 
+			else if (name.find("Edge") != std::string::npos)
+				Canny(videoFrame.clone(), videoFrame); 
+			else if (name.find("Color") != std::string::npos)
+			{
+				// values for the color that needs to be relaced
+				rapidjson::Value::ConstMemberIterator oldColorName = document[name.c_str()].MemberBegin();
+				std::string oldColor = oldColorName->name.GetString();
+				int oldR = atoi(document[name.c_str()][oldColor.c_str()]["R"].GetString()),
+					oldG = atoi(document[name.c_str()][oldColor.c_str()]["G"].GetString()),
+					oldB = atoi(document[name.c_str()][oldColor.c_str()]["B"].GetString());
 
-		//		//values for the color that will be replaced
-		//		rapidjson::Value::ConstMemberIterator newColorName = ++oldColorName;
-		//		std::string newColor = newColorName->name.GetString();
-		//		int newR = atoi(document[name.c_str()][newColor.c_str()]["R"].GetString()), 
-		//			newG = atoi(document[name.c_str()][newColor.c_str()]["G"].GetString()),
-		//			newB = atoi(document[name.c_str()][newColor.c_str()]["B"].GetString());
-				//int tolerance = 0;
-				//determineHSVvaluesForRGBColor(0, 255, 255, tolerance);
-				//changeColor(videoFrame, 65, 105, 225, tolerance);
-		//	}
-		//	else if (name.find("brigthness") != std::string::npos)
-		//		videoFrame = modifyBrigthnessByValue(videoFrame.clone(), document[name.c_str()].GetDouble());
-		//	else if (name.find("detection") != std::string::npos || name.find("face") != std::string::npos)
-		//FaceDetection(videoFrame);
-		HumanDetection(videoFrame);
-		//}
+				//values for the color that will be replaced
+				rapidjson::Value::ConstMemberIterator newColorName = ++oldColorName;
+				std::string newColor = newColorName->name.GetString();
+				int newR = atoi(document[name.c_str()][newColor.c_str()]["R"].GetString()), 
+					newG = atoi(document[name.c_str()][newColor.c_str()]["G"].GetString()),
+					newB = atoi(document[name.c_str()][newColor.c_str()]["B"].GetString());
+				int tolerance = 0;
+				determineHSVvaluesForRGBColor(0, 255, 255, tolerance);
+				changeColor(videoFrame, 65, 105, 225, tolerance);
+			}
+			else if (name.find("Brigthness") != std::string::npos)
+				videoFrame = modifyBrigthnessByValue(videoFrame.clone(), document[name.c_str()].GetDouble());
+			else if (name.find("detection") != std::string::npos || name.find("Face") != std::string::npos)
+				FaceDetection(videoFrame);
+		}
 	}
 
 	void AppMain::determineHSVvaluesForRGBColor(int oldR, int oldG, int oldB, int& tolerance)
@@ -529,34 +528,4 @@ namespace ComputeOnDevice
 		return { buffers_begin(response.data()), buffers_end(response.data()) };
 	}
 
-
-	void AppMain::HumanDetection(cv::Mat& input)
-	{
-		HOGDescriptor hog;
-		hog.setSVMDetector(HOGDescriptor::getDefaultPeopleDetector());
-		std::vector<Rect> found, found_filtered;
-		hog.detectMultiScale(input, found, 0, Size(8, 8), Size(32, 32), 1.85, 1.85);
-
-		size_t i, j;
-		for (i = 0; i < found.size(); i++)
-		{
-			Rect r = found[i];
-			for (j = 0; j < found.size(); j++)
-				if (j != i && (r & found[j]) == r)
-					break;
-			if (j == found.size())
-				found_filtered.push_back(r);
-		}
-		for (i = 0; i < found_filtered.size(); i++)
-		{
-			Rect r = found_filtered[i];
-			//r.x += cvRound(r.width);
-			//r.width = cvRound(r.width*0.2);
-			//r.y /*+= cvRound(r.height*0.5)*/;
-			//r.height = cvRound(r.height*0.8);
-			double pad_w=0.15*r.width, pad_h=0.05*r.height;
-			rectangle(input, cvPoint(r.x+pad_w, r.y+pad_h), cvPoint(r.x + r.width - pad_w, r.y + r.height - pad_h), cv::Scalar(0, 255, 0),1);
-			//rectangle(frameOpenCVHaar, cvPoint(r.x*0.5, r.y*0.5), cvPoint(r.x + r.width*0.5, r.y + r.height*0.5), color)
-		}
-	}
 }

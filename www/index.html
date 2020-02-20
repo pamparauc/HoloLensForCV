@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Configurare JSON</title>
+    <style>
+
+    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <link rel="stylesheet" type="text/css" href="sixth.css" /> -->
+    <script src="web.js"></script>
+</head>
+
+<body>
+    <form id="form" action="insert.php" method="POST">
+        <ul style="list-style-type:none;">
+            <li>
+                <label for="contrast">Constrast</label>
+            <br>
+                <input id = "contrast" name="contrast" type="text" value="" />
+				<span id="spanContrast"></span> <br>
+            </li>
+            <li>
+                <label for="brigthness">Brigthness</label>
+            <br>
+                <input id="brigthness" name="brigthness" type="text" value="" />
+				<span id="spanBrigthness"></span> <br>
+            </li>
+            <li>
+                <label for="edge">Edge Detection</label>
+            <br>
+                <select name="edge">
+                    <option value="1">Yes</option>
+                    <option selected="selected" value="2">No</option>
+                </select>
+            </li>
+            <li>
+                <label for="face">Face detection</label>
+                <br />
+                <select name="face">
+                    <option value="1" >Yes</option>
+                    <option selected="selected" value="2">No</option>
+                </select>
+            </li>
+            <li>
+				<label for="html5colorpicker1">Replace Color</label> <br>
+				<label for="html5colorpicker1">From</label>
+                <input type="color" value="#ff0000" onchange="clickColor('html5colorpicker1')" id="html5colorpicker1" name="html5colorpicker1">
+				<label for="html5colorpicker2">To</label>
+               <input type="color" value="#ff0000" onchange="clickColor('html5colorpicker2')" id="html5colorpicker2" name="html5colorpicker2">
+	</li>
+            <li>
+                <br>
+                <button type="submmit" value="Apply Changes" onclick="tryToSubmit()">Apply Changes</button>
+            </li>
+            <li>
+                <br>
+                <button type="button" value="reset" onclick="reset()">Reset</button>
+            </li>
+        </ul>
+    </form>
+
+    <body>

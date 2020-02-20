@@ -3,11 +3,18 @@ global $finalArray;
 global $arrayContrast, $arrayBrigthness, $faceArray, $edgeArray, $colorArray;
 // contrast
 $contrast = -1;
+$arrayContrast=array();
+$arrayBrigthness=array();
+$faceArray=array();
+$edgeArray=array();
+$colorArray=array();
+$finalArray=array();
 if (!empty($_POST["contrast"]))
   $contrast= $_POST["contrast"];
 if($contrast>-1)
 {
-	$arrayContrast = array("modify-contrast"=>$contrast);
+	$arrayContrast = array("Contrast"=>$contrast);
+	$finalArray = $arrayContrast;
 }
 
 // brigthness
@@ -16,38 +23,37 @@ if(!empty($_POST['brigthness']))
 	$brigthness = $_POST["brigthness"];
 if($brigthness>-1)
 {
-	$arrayBrigthness = array("modify-brigthness"=>$brigthness);
+	$arrayBrigthness = array("Brigthness"=>$brigthness);
 	$finalArray = array_merge($arrayContrast, $arrayBrigthness);
 }
 
 // face Detection
 $faceDetection = $_POST["face"];
-if($faceDetection == "Yes")
+if($faceDetection == 1) // 1-Yes , 2-No  => see web.html file
 {
-	$faceArray += ["apply-face-detection" => "true"];
+	$faceArray = array("Face-detection"=>"true");
 	$finalArray = array_merge($finalArray, $faceArray);
 }
-print_r(json_encode($finalArray)); 
+
+// edge Detection
 $edgeDetection = $_POST["edge"];
-if($edgeDetection == "Yes"){
-	$edgeArray += ["apply-edge-detection" => "true"];
-	$finalArray += $faceArray;
-}
-
-if (!empty($_POST["init_R"]) && !empty($_POST["initG"]) && !empty($_POST["initB"]) &&
-	!empty($_POST["finalR"]) && !empty($_POST["finalG"]) && !empty($_POST["finalB"]))
+if($edgeDetection == 1) // 1-Yes, 2-No => see web.html page
 {
-	$initR = $_POST["init_R"];
-	$initG = $_POST["initG"];
-	$initB = $_POST["initB"];
-	$finalR = $_POST["finalR"];
-	$finalG = $_POST["finalG"];
-	$finalB = $_POST["finalB"];
+	$edgeArray = array("Edge-enhancement" => "true");
+	$finalArray = array_merge($finalArray, $edgeArray);
+}
+if (!empty($_POST["html5colorpicker1"]) && !empty($_POST["html5colorpicker2"]))
+{
+	list($ri, $gi, $bi) = sscanf($_POST["html5colorpicker1"], "#%02x%02x%02x");
+	list($rf, $gf, $bf) = sscanf($_POST["html5colorpicker2"], "#%02x%02x%02x");
 	$colorArray = array(
-		"initial" => array("R"=>$init_R, "G"=>$init_G, "B"=>$init_B),
-		"final" => array("R"=>$final_R, "G"=>$final_G, "B"=>$final_B)
+		"From" => array("R"=>$ri, "G"=>$gi, "B"=>$bi),
+		"To" => array("R"=>$rf, "G"=>$gf, "B"=>$bf)
 	);
-	$finalArray += $colorArray;
+	$replace_color = array("Color-modification"=>$colorArray);
+	$finalArray += $replace_color;
 } 
-
+$file="config.json";
+file_put_contents($file,json_encode($finalArray));
+header('Location: http://stud.usv.ro/~cpamparau/config.json');
 ?>

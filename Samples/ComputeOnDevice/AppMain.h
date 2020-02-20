@@ -106,8 +106,6 @@ namespace ComputeOnDevice
 
 		void FaceDetection(cv::Mat& input);
 
-		void HumanDetection(cv::Mat& input);
-
 		cv::Mat modifyBrigthnessByValue(cv::Mat input, double value);
 
 		cv::Mat modifyContrastByValue(cv::Mat input, double value);
