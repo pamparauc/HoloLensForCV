@@ -335,7 +335,7 @@ namespace ComputeOnDevice
 		Image.setTo(Scalar(newB, newG, newR), mask1); // to Blue
 	}
 
-	void AppMain::Canny(cv::Mat& original, cv::Mat& blurred)
+	void AppMain::detectEdges(cv::Mat& original, cv::Mat& blurred, std::string visualizeEdges)
 	{
 		cv::Mat canny;
 		cv::medianBlur(
@@ -348,24 +348,69 @@ namespace ComputeOnDevice
 			canny, // _cannyPVCameraImage
 			50.0,
 			200.0);
-
-		for (int32_t y = 0; y < blurred.rows; ++y)
+		int visualize = -1;
+		if (visualizeEdges == "Highlight Edges")
+			visualize = 0;
+		else if (visualizeEdges == "Highlight Background Over Edges")
+			visualize = 1;
+		else if (visualizeEdges == "Color Background Highlight Edges")
+			visualize = 2;
+		switch (visualize)
 		{
-			for (int32_t x = 0; x < blurred.cols; ++x)
+			case visualizeEdges::HIGHLIGHT_EDGES:
 			{
-				if (canny.at<uint8_t>(y, x) > 64)
+				for (int32_t y = 0; y < blurred.rows; ++y)
 				{
-					*(blurred.ptr<uint32_t>(y, x)) = 0x00ff00; // initial green  => black thin
+					for (int32_t x = 0; x < blurred.cols; ++x)
+					{
+						if (canny.at<uint8_t>(y, x) > 64)
+						{
+							*(blurred.ptr<uint32_t>(y, x)) = 0x00ff00; // green edges
+						}
+					}
 				}
-				else
+				break;
+			}
+			case visualizeEdges::HIGHLIGHT_BACKGROUND_OVER_EDGES:
+			{
+				for (int32_t y = 0; y < blurred.rows; ++y)
 				{
-					*(blurred.ptr<uint32_t>(y,x)) = 0x909090; // gray background
+					for (int32_t x = 0; x < blurred.cols; ++x)
+					{
+						if (canny.at<uint8_t>(y, x) > 64)
+						{
+							*(blurred.ptr<uint32_t>(y, x)) = 0x00ff00; // green edges
+						}
+						else
+						{
+							*(blurred.ptr<uint32_t>(y, x)) = 0x909090; // gray background
+						}
+					}
 				}
+				break;
+			}
+			case visualizeEdges::COLOR_BACKGROUND_HIGHLIGHT_EDGES:
+			{
+				for (int32_t y = 0; y < blurred.rows; ++y)
+				{
+					for (int32_t x = 0; x < blurred.cols; ++x)
+					{
+						if (canny.at<uint8_t>(y, x) > 64)
+						{
+							*(blurred.ptr<uint32_t>(y, x)) = 0x909090; // gray edges
+						}
+						else
+						{
+							*(blurred.ptr<uint32_t>(y, x)) = 0x00ff00; // green background  
+						}
+					}
+				}
+				break;
 			}
 		}
 	}
 
-	void AppMain::FaceDetection(cv::Mat& frameOpenCVHaar)
+	void AppMain::detectFaces(cv::Mat& frameOpenCVHaar)
 	{
 		std::vector<Rect> faces;
 		Mat gray;
@@ -384,7 +429,7 @@ namespace ComputeOnDevice
 	
 	}
 
-	cv::Mat AppMain::modifyBrigthnessByValue(cv::Mat input, double value)
+	cv::Mat AppMain::adjustContrast(cv::Mat input, double value)
 	{
 		cv::Mat output;
 		// value > 0 => increase brigthness
@@ -393,7 +438,7 @@ namespace ComputeOnDevice
 		return output;
 	}
 
-	cv::Mat AppMain::modifyContrastByValue(cv::Mat input, double value)
+	cv::Mat AppMain::adjustBrigthness(cv::Mat input, double value)
 	{
 		cv::Mat output;
 		// value < 1 => decrease contrast
@@ -412,10 +457,12 @@ namespace ComputeOnDevice
 		for (rapidjson::Value::ConstMemberIterator iter = document.MemberBegin(); iter < document.MemberEnd(); ++iter)
 		{
 			std::string name = iter->name.GetString();
-			if (name.find("Contrast") != std::string::npos)
-				videoFrame = modifyContrastByValue(videoFrame.clone(), 1 - document[name.c_str()].GetDouble() / 100); 
+			if (name.find("Contrast") != std::string::npos) {
+				double contrast = document[name.c_str()].GetDouble();
+				videoFrame = adjustContrast(videoFrame.clone(), contrast);
+			}
 			else if (name.find("Edge") != std::string::npos)
-				Canny(videoFrame.clone(), videoFrame); 
+				detectEdges(videoFrame.clone(), videoFrame, document[name.c_str()].GetString()); 
 			else if (name.find("Color") != std::string::npos)
 			{
 				// values for the color that needs to be relaced
@@ -432,17 +479,19 @@ namespace ComputeOnDevice
 					newG = atoi(document[name.c_str()][newColor.c_str()]["G"].GetString()),
 					newB = atoi(document[name.c_str()][newColor.c_str()]["B"].GetString());
 				int tolerance = 0;
-				determineHSVvaluesForRGBColor(0, 255, 255, tolerance);
+				RGBtoHSV(0, 255, 255, tolerance);
 				changeColor(videoFrame, 65, 105, 225, tolerance);
 			}
-			else if (name.find("Brigthness") != std::string::npos)
-				videoFrame = modifyBrigthnessByValue(videoFrame.clone(), document[name.c_str()].GetDouble());
+			else if (name.find("Brigthness") != std::string::npos) {
+				double brigthness = document[name.c_str()].GetDouble();
+				videoFrame = adjustBrigthness(videoFrame.clone(), brigthness);
+			}
 			else if (name.find("detection") != std::string::npos || name.find("Face") != std::string::npos)
-				FaceDetection(videoFrame);
+				detectFaces(videoFrame);
 		}
 	}
 
-	void AppMain::determineHSVvaluesForRGBColor(int oldR, int oldG, int oldB, int& tolerance)
+	void AppMain::RGBtoHSV(int oldR, int oldG, int oldB, int& tolerance)
 	{
 		// according to https://www.rapidtables.com/convert/color/rgb-to-hsv.html
 		// opencv works with BGR not RGB

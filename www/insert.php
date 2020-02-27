@@ -37,12 +37,26 @@ if($faceDetection == 1) // 1-Yes , 2-No  => see web.html file
 
 // edge Detection
 $edgeDetection = $_POST["edge"];
-if($edgeDetection == 1) // 1-Yes, 2-No => see web.html page
+// 1-No, 2-Highlight Edges
+// 3-Highlight Background Over Edges, 4 - Color Background Highlight Edges => see web.html page
+if($edgeDetection != 1) 
 {
-	$edgeArray = array("Edge-enhancement" => "true");
+	switch($edgeDetection)
+	{
+		case 2:
+			$edgeArray = array("Edge-enhancement" => "Highlight Edges");
+			break;
+		case 3:
+			$edgeArray = array("Edge-enhancement" => "Highlight Background Over Edges");
+			break;
+		case 4:
+			$edgeArray = array("Edge-enhancement" => "Color Background Highlight Edges");
+			break;
+	}
 	$finalArray = array_merge($finalArray, $edgeArray);
 }
-if (!empty($_POST["html5colorpicker1"]) && !empty($_POST["html5colorpicker2"]))
+if (!empty($_POST["html5colorpicker1"]) && !empty($_POST["html5colorpicker2"])
+	&& $_POST["html5colorpicker1"] != $_POST["html5colorpicker2"])
 {
 	list($ri, $gi, $bi) = sscanf($_POST["html5colorpicker1"], "#%02x%02x%02x");
 	list($rf, $gf, $bf) = sscanf($_POST["html5colorpicker2"], "#%02x%02x%02x");
@@ -54,6 +68,13 @@ if (!empty($_POST["html5colorpicker1"]) && !empty($_POST["html5colorpicker2"]))
 	$finalArray += $replace_color;
 } 
 $file="config.json";
-file_put_contents($file,json_encode($finalArray));
-header('Location: http://stud.usv.ro/~cpamparau/config.json');
+if(!empty($finalArray))
+{
+	file_put_contents($file,json_encode($finalArray));
+	header('Location: http://stud.usv.ro/~cpamparau/config.json');
+}
+else
+{
+	header('Location: http://stud.usv.ro/~cpamparau');
+}
 ?>

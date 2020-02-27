@@ -102,16 +102,30 @@ namespace ComputeOnDevice
 		
 
 		void changeColor(cv::Mat& Image, int oldR, int oldG, int oldB, int H);
-		void Canny(cv::Mat& original, cv::Mat& blurred);
+		void detectEdges(cv::Mat& original, cv::Mat& blurred, std::string visualizeEdges);
 
-		void FaceDetection(cv::Mat& input);
+		void detectFaces(cv::Mat& input);
 
-		cv::Mat modifyBrigthnessByValue(cv::Mat input, double value);
+		cv::Mat adjustContrast(cv::Mat input, double value);
 
-		cv::Mat modifyContrastByValue(cv::Mat input, double value);
+		cv::Mat adjustBrigthness(cv::Mat input, double value);
 
 		void applyVisualFilters(cv::Mat& videoFrame);
 
-		void determineHSVvaluesForRGBColor(int oldR, int oldG, int oldB, int& tolerance);
+		void RGBtoHSV(int oldR, int oldG, int oldB, int& tolerance);
+
+		enum visualFilter {
+			CONTRAST = 0,
+			BRIGTHNESS = 1,
+			DETECT_FACES = 2,
+			DETECT_EDGES = 3,
+			CHANGE_COLOR = 4
+		};
+
+		enum visualizeEdges {
+			HIGHLIGHT_EDGES = 0,
+			HIGHLIGHT_BACKGROUND_OVER_EDGES = 1,
+			COLOR_BACKGROUND_HIGHLIGHT_EDGES = 2
+		};
 	};
 }
