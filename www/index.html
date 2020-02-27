@@ -8,27 +8,31 @@
     </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- <link rel="stylesheet" type="text/css" href="sixth.css" /> -->
+    <link rel="stylesheet" type="text/css" href="style.css" />
     <script src="web.js"></script>
 </head>
 
 <body>
+<div class="form-style-5">
+	<h1> Welcome on FlexiSee's configuration page!
+	Let's define our visual filters. </h1>
     <form id="form" action="insert.php" method="POST">
+	<fieldset>
         <ul style="list-style-type:none;">
             <li>
-                <label for="contrast">Constrast</label>
+                <legend><label for="contrast">Constrast</label></legend>
             <br>
-                <input id = "contrast" name="contrast" type="text" value="" />
+                <input id = "contrast" name="contrast" type="text" value="" placeholder="Type a number less or greater than 1"/>
 				<span id="spanContrast"></span> <br>
             </li>
             <li>
-                <label for="brigthness">Brigthness</label>
+                <legend><label for="brigthness">Brigthness</label><legend>
             <br>
-                <input id="brigthness" name="brigthness" type="text" value="" />
+                <input id="brigthness" name="brigthness" type="text" value="" placeholder="Type a number less or greater than 0"/>
 				<span id="spanBrigthness"></span> <br>
             </li>
             <li>
-                <label for="edge">Edge Detection</label>
+                <legend><label for="edge">Edge Detection</label></legend>
             <br>
                 <select name="edge">
                     <option value="1">Yes</option>
@@ -36,7 +40,7 @@
                 </select>
             </li>
             <li>
-                <label for="face">Face detection</label>
+                <legend><label for="face">Face detection</label></legend>
                 <br />
                 <select name="face">
                     <option value="1" >Yes</option>
@@ -44,21 +48,23 @@
                 </select>
             </li>
             <li>
-				<label for="html5colorpicker1">Replace Color</label> <br>
+				<legend><label for="html5colorpicker1"><b>Replace Color</b></label> <br>
 				<label for="html5colorpicker1">From</label>
-                <input type="color" value="#ff0000" onchange="clickColor('html5colorpicker1')" id="html5colorpicker1" name="html5colorpicker1">
-				<label for="html5colorpicker2">To</label>
+                <input placeholder = "Click here to choose a color" type="color" value="#ff0000" onchange="clickColor('html5colorpicker1')" id="html5colorpicker1" name="html5colorpicker1">
+				<label for="html5colorpicker2">To</label></legend>
                <input type="color" value="#ff0000" onchange="clickColor('html5colorpicker2')" id="html5colorpicker2" name="html5colorpicker2">
 	</li>
             <li>
                 <br>
-                <button type="submmit" value="Apply Changes" onclick="tryToSubmit()">Apply Changes</button>
+                <input type="submit" value="Apply Changes" onclick="tryToSubmit()"></input>
             </li>
             <li>
                 <br>
-                <button type="button" value="reset" onclick="reset()">Reset</button>
+                <input type="button" value="Reset" onclick="reset()"></input>
             </li>
         </ul>
+	  </fieldset>
+	 	</div>
     </form>
-
-    <body>
+	
+    </body>
