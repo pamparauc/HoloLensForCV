@@ -335,9 +335,10 @@ namespace ComputeOnDevice
 		Image.setTo(Scalar(newB, newG, newR), mask1); // to Blue
 	}
 
-	void AppMain::detectEdges(cv::Mat& original, cv::Mat& blurred, std::string visualizeEdges)
+	cv::Mat AppMain::detectEdges(cv::Mat& original, enum ComputeOnDevice::visualizeEdges type)
 	{
 		cv::Mat canny;
+		cv::Mat blurred;
 		cv::medianBlur(
 			original, // _resizedPVCameraImage
 			blurred,// _blurredPVCameraImage
@@ -348,14 +349,7 @@ namespace ComputeOnDevice
 			canny, // _cannyPVCameraImage
 			50.0,
 			200.0);
-		int visualize = -1;
-		if (visualizeEdges == "Highlight Edges")
-			visualize = 0;
-		else if (visualizeEdges == "Highlight Background Over Edges")
-			visualize = 1;
-		else if (visualizeEdges == "Color Background Highlight Edges")
-			visualize = 2;
-		switch (visualize)
+		switch (type)
 		{
 			case visualizeEdges::HIGHLIGHT_EDGES:
 			{
@@ -408,9 +402,10 @@ namespace ComputeOnDevice
 				break;
 			}
 		}
+		return blurred;
 	}
 
-	void AppMain::detectFaces(cv::Mat& frameOpenCVHaar)
+	cv::Mat AppMain::detectFaces(cv::Mat frameOpenCVHaar)
 	{
 		std::vector<Rect> faces;
 		Mat gray;
@@ -426,7 +421,7 @@ namespace ComputeOnDevice
 				rectangle(frameOpenCVHaar, cvPoint(r.x, r.y), cvPoint(r.x + r.width, r.y + r.height), color);
 			}
 		}
-	
+		return frameOpenCVHaar;
 	}
 
 	cv::Mat AppMain::adjustContrast(cv::Mat input, double value)
@@ -454,40 +449,40 @@ namespace ComputeOnDevice
 			rapidjson::ParseErrorCode error = document.GetParseError();
 			return;
 		}
-		for (rapidjson::Value::ConstMemberIterator iter = document.MemberBegin(); iter < document.MemberEnd(); ++iter)
+		for (rapidjson::Value::ConstMemberIterator iter = document.MemberBegin(); 
+			iter < document.MemberEnd(); ++iter)
 		{
 			std::string name = iter->name.GetString();
 			if (name.find("Contrast") != std::string::npos) {
 				double contrast = document[name.c_str()].GetDouble();
-				videoFrame = adjustContrast(videoFrame.clone(), contrast);
+				videoFrame = visualFilter(videoFrame, ADJUST_CONTRAST, contrast);
 			}
-			else if (name.find("Edge") != std::string::npos)
-				detectEdges(videoFrame.clone(), videoFrame, document[name.c_str()].GetString()); 
+			else if (name.find("Edge") != std::string::npos) {
+				std::string type = document[name.c_str()].GetString();
+				videoFrame = visualFilter(videoFrame, DETECT_EDGES, type);
+			}
 			else if (name.find("Color") != std::string::npos)
 			{
-				// values for the color that needs to be relaced
-				rapidjson::Value::ConstMemberIterator oldColorName = document[name.c_str()].MemberBegin();
-				std::string oldColor = oldColorName->name.GetString();
-				int oldR = atoi(document[name.c_str()][oldColor.c_str()]["R"].GetString()),
-					oldG = atoi(document[name.c_str()][oldColor.c_str()]["G"].GetString()),
-					oldB = atoi(document[name.c_str()][oldColor.c_str()]["B"].GetString());
-
-				//values for the color that will be replaced
-				rapidjson::Value::ConstMemberIterator newColorName = ++oldColorName;
-				std::string newColor = newColorName->name.GetString();
-				int newR = atoi(document[name.c_str()][newColor.c_str()]["R"].GetString()), 
-					newG = atoi(document[name.c_str()][newColor.c_str()]["G"].GetString()),
-					newB = atoi(document[name.c_str()][newColor.c_str()]["B"].GetString());
-				int tolerance = 0;
-				RGBtoHSV(0, 255, 255, tolerance);
-				changeColor(videoFrame, 65, 105, 225, tolerance);
+				// (R,G,B) values of the color to be replaced
+				rapidjson::Value& val = document[name.c_str()];
+				int oldR = getColorComponent(val, "From", "R"),
+					oldG = getColorComponent(val, "From", "G"),
+					oldB = getColorComponent(val, "From", "B");
+				// (R,G,B) values of the replacing color
+				int newR = getColorComponent(val, "To", "R"),
+					newG = getColorComponent(val, "To", "G"),
+					newB = getColorComponent(val, "To", "B");
+				// replace color based on  a similarity tolerance
+				videoFrame = visualFilter(videoFrame, CHANGE_COLOR, 
+					oldB, oldG, oldR, newR, newG, newB);
 			}
 			else if (name.find("Brigthness") != std::string::npos) {
 				double brigthness = document[name.c_str()].GetDouble();
-				videoFrame = adjustBrigthness(videoFrame.clone(), brigthness);
+				videoFrame = visualFilter(videoFrame, ADJUST_BRIGTHNESS, brigthness);
 			}
-			else if (name.find("detection") != std::string::npos || name.find("Face") != std::string::npos)
-				detectFaces(videoFrame);
+			else if (name.find("detection") != std::string::npos ||
+				name.find("Face") != std::string::npos)
+				videoFrame = visualFilter(videoFrame, DETECT_FACES);
 		}
 	}
 
@@ -577,4 +572,73 @@ namespace ComputeOnDevice
 		return { buffers_begin(response.data()), buffers_end(response.data()) };
 	}
 
+	cv::Mat& AppMain::visualFilter(cv::Mat& videoFrame, int type, ...)
+	{
+		cv::Mat& processedFrame = videoFrame.clone();
+		switch (type)
+		{
+			va_list ap;
+			int number;
+			case visualFilter::ADJUST_CONTRAST:
+			{
+				number = 1; // number of parameters required
+				va_start(ap, number);
+				double value = va_arg(ap, double);
+				processedFrame = adjustContrast(videoFrame, value);
+				break;
+			}
+			case visualFilter::ADJUST_BRIGTHNESS:
+			{
+				number = 1;
+				va_start(ap, number);
+				double value = va_arg(ap, double);
+				processedFrame = adjustBrigthness(videoFrame, value);
+				break;
+			}
+			case visualFilter::DETECT_EDGES:
+			{
+				number = 1;
+				va_start(ap, number);
+				std::string visualizeEdges = va_arg(ap, std::string);
+				ComputeOnDevice::visualizeEdges visualize = visualizeEdges::UNDEFINED;
+				if (visualizeEdges == "Highlight Edges")
+					visualize = visualizeEdges::HIGHLIGHT_EDGES;
+				else if (visualizeEdges == "Highlight Background Over Edges")
+					visualize = visualizeEdges::HIGHLIGHT_BACKGROUND_OVER_EDGES;
+				else if (visualizeEdges == "Color Background Highlight Edges")
+					visualize = visualizeEdges::COLOR_BACKGROUND_HIGHLIGHT_EDGES;
+				processedFrame = detectEdges(videoFrame, visualize);
+				break;
+			}
+			case visualFilter::DETECT_FACES:
+			{
+				processedFrame = detectFaces(videoFrame);
+				break;
+			}
+			case visualFilter::CHANGE_COLOR:
+			{
+				number = 6;
+				va_start(ap, number);
+				int oldB = va_arg(ap, int), oldG = va_arg(ap, int), oldR = va_arg(ap, int),
+					newR = va_arg(ap, int), newG = va_arg(ap, int), newB = va_arg(ap, int),
+					tolerance = 0;
+				RGBtoHSV(oldB, oldG, oldR, tolerance);
+				changeColor(processedFrame, newR, newG, newB, tolerance);
+				break;
+			}
+		}
+		return processedFrame;
+	}
+	int AppMain::getColorComponent(rapidjson::Value& val, std::string toFrom, std::string color)
+	{
+		rapidjson::Value::ConstMemberIterator oldColorName = val.MemberBegin();
+		std::string oldColor = oldColorName->name.GetString();
+		if (toFrom == "From")
+			return atoi(val[oldColor.c_str()][color.c_str()].GetString());
+		else if (toFrom == "To") {
+			rapidjson::Value::ConstMemberIterator newColorName = ++oldColorName;
+			std::string newColor = newColorName->name.GetString();
+			return atoi(val[newColor.c_str()][color.c_str()].GetString());
+		}
+	}
 }

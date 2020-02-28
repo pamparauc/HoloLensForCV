@@ -102,9 +102,9 @@ namespace ComputeOnDevice
 		
 
 		void changeColor(cv::Mat& Image, int oldR, int oldG, int oldB, int H);
-		void detectEdges(cv::Mat& original, cv::Mat& blurred, std::string visualizeEdges);
+		cv::Mat detectEdges(cv::Mat& original,  enum visualizeEdges type);
 
-		void detectFaces(cv::Mat& input);
+		cv::Mat detectFaces(cv::Mat input);
 
 		cv::Mat adjustContrast(cv::Mat input, double value);
 
@@ -114,18 +114,24 @@ namespace ComputeOnDevice
 
 		void RGBtoHSV(int oldR, int oldG, int oldB, int& tolerance);
 
-		enum visualFilter {
-			CONTRAST = 0,
-			BRIGTHNESS = 1,
-			DETECT_FACES = 2,
-			DETECT_EDGES = 3,
-			CHANGE_COLOR = 4
-		};
+		cv::Mat& visualFilter(cv::Mat& videoFrame, int type, ...);
 
-		enum visualizeEdges {
-			HIGHLIGHT_EDGES = 0,
-			HIGHLIGHT_BACKGROUND_OVER_EDGES = 1,
-			COLOR_BACKGROUND_HIGHLIGHT_EDGES = 2
-		};
+		int getColorComponent(rapidjson::Value& val, std::string toFrom, std::string color);
+	};
+
+
+	enum visualFilter {
+		ADJUST_CONTRAST = 0,
+		ADJUST_BRIGTHNESS = 1,
+		DETECT_FACES = 2,
+		DETECT_EDGES = 3,
+		CHANGE_COLOR = 4
+	};
+
+	enum visualizeEdges {
+		HIGHLIGHT_EDGES = 0,
+		HIGHLIGHT_BACKGROUND_OVER_EDGES = 1,
+		COLOR_BACKGROUND_HIGHLIGHT_EDGES = 2,
+		UNDEFINED = 3 // used for initializing 
 	};
 }
