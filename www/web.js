@@ -66,17 +66,17 @@ function tryToSubmit() {
 		markValidity("contrast", "spanContrast","",true);
 	}
 	
-	var brigthness = d("brigthness").value;
-	if(isNaN(brigthness))
+	var brightness = d("brightness").value;
+	if(isNaN(brightness))
 	{
-		if(brigthness.value != "")
+		if(brightness.value != "")
 		{
 			error = "Valoarea trebuie sa fie intre un numar intreg. De exemplu, 60.";
-			markValidity("brigthness", "spanBrigthness",error,false);
+			markValidity("brightness", "spanBrigthness",error,false);
 		}
 	}
 	else{
-		markValidity("brigthness", "spanBrigthness","",true);
+		markValidity("brightness", "spanBrigthness","",true);
 	}
 	
 	if (error == "")

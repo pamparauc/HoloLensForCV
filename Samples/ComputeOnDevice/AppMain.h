@@ -108,13 +108,13 @@ namespace ComputeOnDevice
 
 		cv::Mat adjustContrast(cv::Mat input, double value);
 
-		cv::Mat adjustBrigthness(cv::Mat input, double value);
+		cv::Mat adjustBrightness(cv::Mat input, double value);
 
 		void applyVisualFilters(cv::Mat& videoFrame);
 
 		void RGBtoHSV(int oldR, int oldG, int oldB, int& tolerance);
 
-		cv::Mat& visualFilter(cv::Mat& videoFrame, int type, ...);
+		cv::Mat& visualFilter(cv::Mat& videoFrame, int type, int number, ...);
 
 		int getColorComponent(rapidjson::Value& val, std::string toFrom, std::string color);
 	};
@@ -122,7 +122,7 @@ namespace ComputeOnDevice
 
 	enum visualFilter {
 		ADJUST_CONTRAST = 0,
-		ADJUST_BRIGTHNESS = 1,
+		ADJUST_BRIGHTNESS = 1,
 		DETECT_FACES = 2,
 		DETECT_EDGES = 3,
 		CHANGE_COLOR = 4

@@ -1,30 +1,30 @@
 <?php
 global $finalArray;
-global $arrayContrast, $arrayBrigthness, $faceArray, $edgeArray, $colorArray;
+global $arrayContrast, $arrayBrightness, $faceArray, $edgeArray, $colorArray;
 // contrast
 $contrast = -1;
 $arrayContrast=array();
-$arrayBrigthness=array();
+$arrayBrightness=array();
 $faceArray=array();
 $edgeArray=array();
 $colorArray=array();
-$finalArray=array();
+$finalArray=array("Users"=>"Hololens-1");
 if (!empty($_POST["contrast"]))
   $contrast= $_POST["contrast"];
 if($contrast>-1)
 {
 	$arrayContrast = array("Contrast"=>$contrast);
-	$finalArray = $arrayContrast;
+	$finalArray = array_merge($finalArray, $arrayContrast);
 }
 
-// brigthness
-$brigthness = -1;
-if(!empty($_POST['brigthness']))
-	$brigthness = $_POST["brigthness"];
-if($brigthness>-1)
+// brightness
+$brightness = -1;
+if(!empty($_POST['brightness']))
+	$brightness = $_POST["brightness"];
+if($brightness>-1)
 {
-	$arrayBrigthness = array("Brigthness"=>$brigthness);
-	$finalArray = array_merge($arrayContrast, $arrayBrigthness);
+	$arrayBrightness = array("Brightness"=>$brightness);
+	$finalArray = array_merge($finalArray, $arrayBrightness);
 }
 
 // face Detection

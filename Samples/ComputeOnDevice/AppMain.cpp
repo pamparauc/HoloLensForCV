@@ -17,6 +17,7 @@
 #include <fstream>
 #include <locale>
 #include <codecvt>
+#include <algorithm>
 
 using namespace cv;
 using namespace Windows::Storage;
@@ -427,18 +428,19 @@ namespace ComputeOnDevice
 	cv::Mat AppMain::adjustContrast(cv::Mat input, double value)
 	{
 		cv::Mat output;
-		// value > 0 => increase brigthness
-		// value < 0 => decrease brigthness
-		input.convertTo(output, -1, 1, value);
-		return output;
-	}
-
-	cv::Mat AppMain::adjustBrigthness(cv::Mat input, double value)
-	{
-		cv::Mat output;
 		// value < 1 => decrease contrast
 		// value > 1 => increase contrast
 		input.convertTo(output, -1, value, 0);
+		
+		return output;
+	}
+
+	cv::Mat AppMain::adjustBrightness(cv::Mat input, double value)
+	{
+		cv::Mat output;
+		// value > 0 => increase brigthness
+		// value < 0 => decrease brigthness
+		input.convertTo(output, -1, 1, value);
 		return output;
 	}
 
@@ -454,12 +456,13 @@ namespace ComputeOnDevice
 		{
 			std::string name = iter->name.GetString();
 			if (name.find("Contrast") != std::string::npos) {
-				double contrast = document[name.c_str()].GetDouble();
-				videoFrame = visualFilter(videoFrame, ADJUST_CONTRAST, contrast);
+				std::string con = document[name.c_str()].GetString();
+				double contrast = atof(con.c_str());
+				visualFilter(videoFrame, ADJUST_CONTRAST, 1, contrast);
 			}
 			else if (name.find("Edge") != std::string::npos) {
 				std::string type = document[name.c_str()].GetString();
-				videoFrame = visualFilter(videoFrame, DETECT_EDGES, type);
+				visualFilter(videoFrame, DETECT_EDGES, 1,  type);
 			}
 			else if (name.find("Color") != std::string::npos)
 			{
@@ -473,16 +476,18 @@ namespace ComputeOnDevice
 					newG = getColorComponent(val, "To", "G"),
 					newB = getColorComponent(val, "To", "B");
 				// replace color based on  a similarity tolerance
-				videoFrame = visualFilter(videoFrame, CHANGE_COLOR, 
+				visualFilter(videoFrame, CHANGE_COLOR, 
 					oldB, oldG, oldR, newR, newG, newB);
 			}
-			else if (name.find("Brigthness") != std::string::npos) {
-				double brigthness = document[name.c_str()].GetDouble();
-				videoFrame = visualFilter(videoFrame, ADJUST_BRIGTHNESS, brigthness);
+			else if (name.find("Brightness") != std::string::npos) {
+				std::string con = document[name.c_str()].GetString();
+				con.erase(remove_if(con.begin(), con.end(), isspace), con.end());
+				double brightness = atof(con.c_str());
+				visualFilter(videoFrame, ADJUST_BRIGHTNESS, 1, brightness);
 			}
 			else if (name.find("detection") != std::string::npos ||
 				name.find("Face") != std::string::npos)
-				videoFrame = visualFilter(videoFrame, DETECT_FACES);
+				visualFilter(videoFrame, DETECT_FACES, 0);
 		}
 	}
 
@@ -572,34 +577,31 @@ namespace ComputeOnDevice
 		return { buffers_begin(response.data()), buffers_end(response.data()) };
 	}
 
-	cv::Mat& AppMain::visualFilter(cv::Mat& videoFrame, int type, ...)
+	cv::Mat& AppMain::visualFilter(cv::Mat& videoFrame, int type, int number, ...)
 	{
 		cv::Mat& processedFrame = videoFrame.clone();
+		va_list ap;
+		va_start(ap, number);
 		switch (type)
 		{
-			va_list ap;
-			int number;
 			case visualFilter::ADJUST_CONTRAST:
 			{
-				number = 1; // number of parameters required
-				va_start(ap, number);
-				double value = va_arg(ap, double);
-				processedFrame = adjustContrast(videoFrame, value);
+				double value =  va_arg(ap, double);
+				va_end(ap);
+				videoFrame = adjustContrast(processedFrame, value);
 				break;
 			}
-			case visualFilter::ADJUST_BRIGTHNESS:
+			case visualFilter::ADJUST_BRIGHTNESS:
 			{
-				number = 1;
-				va_start(ap, number);
 				double value = va_arg(ap, double);
-				processedFrame = adjustBrigthness(videoFrame, value);
+				va_end(ap);
+				videoFrame = adjustBrightness(videoFrame, value);
 				break;
 			}
 			case visualFilter::DETECT_EDGES:
 			{
-				number = 1;
-				va_start(ap, number);
 				std::string visualizeEdges = va_arg(ap, std::string);
+				va_end(ap);
 				ComputeOnDevice::visualizeEdges visualize = visualizeEdges::UNDEFINED;
 				if (visualizeEdges == "Highlight Edges")
 					visualize = visualizeEdges::HIGHLIGHT_EDGES;
@@ -607,26 +609,26 @@ namespace ComputeOnDevice
 					visualize = visualizeEdges::HIGHLIGHT_BACKGROUND_OVER_EDGES;
 				else if (visualizeEdges == "Color Background Highlight Edges")
 					visualize = visualizeEdges::COLOR_BACKGROUND_HIGHLIGHT_EDGES;
-				processedFrame = detectEdges(videoFrame, visualize);
+				detectEdges(videoFrame, visualize);
 				break;
 			}
 			case visualFilter::DETECT_FACES:
 			{
-				processedFrame = detectFaces(videoFrame);
+				detectFaces(videoFrame);
 				break;
 			}
 			case visualFilter::CHANGE_COLOR:
 			{
-				number = 6;
-				va_start(ap, number);
 				int oldB = va_arg(ap, int), oldG = va_arg(ap, int), oldR = va_arg(ap, int),
 					newR = va_arg(ap, int), newG = va_arg(ap, int), newB = va_arg(ap, int),
 					tolerance = 0;
+				va_end(ap);
 				RGBtoHSV(oldB, oldG, oldR, tolerance);
-				changeColor(processedFrame, newR, newG, newB, tolerance);
+				changeColor(videoFrame, newR, newG, newB, tolerance);
 				break;
 			}
 		}
+
 		return processedFrame;
 	}
 	int AppMain::getColorComponent(rapidjson::Value& val, std::string toFrom, std::string color)
