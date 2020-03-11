@@ -462,7 +462,7 @@ namespace ComputeOnDevice
 			}
 			else if (name.find("Edge") != std::string::npos) {
 				std::string type = document[name.c_str()].GetString();
-				visualFilter(videoFrame, DETECT_EDGES, 1,  type);
+				videoFrame = visualFilter(videoFrame.clone(), DETECT_EDGES, 1,  type);
 			}
 			else if (name.find("Color") != std::string::npos)
 			{
@@ -476,8 +476,8 @@ namespace ComputeOnDevice
 					newG = getColorComponent(val, "To", "G"),
 					newB = getColorComponent(val, "To", "B");
 				// replace color based on  a similarity tolerance
-				visualFilter(videoFrame, CHANGE_COLOR, 
-					oldB, oldG, oldR, newR, newG, newB);
+				visualFilter(videoFrame, CHANGE_COLOR, 6,
+					oldR, oldG, oldB, newR, newG, newB);
 			}
 			else if (name.find("Brightness") != std::string::npos) {
 				std::string con = document[name.c_str()].GetString();
@@ -609,7 +609,7 @@ namespace ComputeOnDevice
 					visualize = visualizeEdges::HIGHLIGHT_BACKGROUND_OVER_EDGES;
 				else if (visualizeEdges == "Color Background Highlight Edges")
 					visualize = visualizeEdges::COLOR_BACKGROUND_HIGHLIGHT_EDGES;
-				detectEdges(videoFrame, visualize);
+				videoFrame = detectEdges(videoFrame.clone(), visualize);
 				break;
 			}
 			case visualFilter::DETECT_FACES:
@@ -619,9 +619,13 @@ namespace ComputeOnDevice
 			}
 			case visualFilter::CHANGE_COLOR:
 			{
-				int oldB = va_arg(ap, int), oldG = va_arg(ap, int), oldR = va_arg(ap, int),
-					newR = va_arg(ap, int), newG = va_arg(ap, int), newB = va_arg(ap, int),
-					tolerance = 0;
+				int oldR = va_arg(ap, int);
+				int oldG = va_arg(ap, int);
+				int oldB = va_arg(ap, int);
+				int newR = va_arg(ap, int);
+				int newG = va_arg(ap, int);
+				int newB = va_arg(ap, int);
+				int	tolerance = 0;
 				va_end(ap);
 				RGBtoHSV(oldB, oldG, oldR, tolerance);
 				changeColor(videoFrame, newR, newG, newB, tolerance);
@@ -629,18 +633,15 @@ namespace ComputeOnDevice
 			}
 		}
 
-		return processedFrame;
+		return videoFrame;
 	}
 	int AppMain::getColorComponent(rapidjson::Value& val, std::string toFrom, std::string color)
 	{
 		rapidjson::Value::ConstMemberIterator oldColorName = val.MemberBegin();
 		std::string oldColor = oldColorName->name.GetString();
-		if (toFrom == "From")
-			return atoi(val[oldColor.c_str()][color.c_str()].GetString());
-		else if (toFrom == "To") {
-			rapidjson::Value::ConstMemberIterator newColorName = ++oldColorName;
-			std::string newColor = newColorName->name.GetString();
-			return atoi(val[newColor.c_str()][color.c_str()].GetString());
-		}
+		if (toFrom == "From") 
+			return document["Color-modification"]["From"][color.c_str()].GetInt();
+		else if (toFrom == "To") 
+			return document["Color-modification"]["To"][color.c_str()].GetInt();
 	}
 }
