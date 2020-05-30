@@ -111,7 +111,12 @@ namespace ComputeOnDevice
         _In_ Windows::Graphics::Holographic::HolographicFrame^ holographicFrame,
         _In_ const Graphics::StepTimer& stepTimer)
     {
-
+		/*data = get_http_data("www.stud.usv.ro", "/~cpamparau/config.json");
+		if (!data.empty())
+		{
+			//document.Parse<rapidjson::kParseIterativeFlag, rapidjson::kParseFullPrecisionFlag>(data.c_str());
+			document.ParseInsitu(const_cast<char*>(data.data()));
+		}*/
         UNREFERENCED_PARAMETER(holographicFrame);
 
         dbg::TimerGuard timerGuard(
