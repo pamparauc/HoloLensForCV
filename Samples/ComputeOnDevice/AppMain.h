@@ -31,10 +31,10 @@ namespace ComputeOnDevice
 	public:
 		AppMain(
 			const ::std::shared_ptr<Graphics::DeviceResources>& deviceResources);
-
+		std::thread* tr = nullptr;
 		// IDeviceNotify
 		virtual void OnDeviceLost() override;
-
+		void listening();
 		virtual void OnDeviceRestored() override;
 
 		// IAppMain

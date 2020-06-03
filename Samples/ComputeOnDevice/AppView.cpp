@@ -10,9 +10,10 @@
 //*********************************************************
 
 #include "pch.h"
-
+#include <winsock2.h>
 #include "AppMain.h"
 #include "AppView.h"
+#pragma comment(lib, "Ws2_32.lib")
 
 // The main function is only used to initialize our IFrameworkView class.
 // Under most circumstances, you should not need to modify this function.
@@ -20,14 +21,15 @@
 int main(
     Platform::Array<Platform::String^>^)
 {
+	
     ComputeOnDevice::AppViewSource^ appViewSource =
         ref new ComputeOnDevice::AppViewSource();
 
-    Windows::ApplicationModel::Core::CoreApplication::Run(
-        appViewSource);
-
+	Windows::ApplicationModel::Core::CoreApplication::Run(
+		appViewSource);
     return 0;
 }
+
 
 namespace ComputeOnDevice
 {

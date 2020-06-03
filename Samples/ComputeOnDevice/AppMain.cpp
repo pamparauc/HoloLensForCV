@@ -24,6 +24,7 @@ using namespace Windows::Storage;
 
 using namespace Concurrency;
 
+
 namespace ComputeOnDevice
 {
 	cv::CascadeClassifier AppMain::faceCascade;
@@ -37,13 +38,13 @@ namespace ComputeOnDevice
         , _holoLensMediaFrameSourceGroupStarted(false)
         , _isActiveRenderer(false)
     {
+		tr = new std::thread (&AppMain::listening,this);
 		data = get_http_data("www.stud.usv.ro", "/~cpamparau/config.json");
 		if (!data.empty())
 		{
 			//document.Parse<rapidjson::kParseIterativeFlag, rapidjson::kParseFullPrecisionFlag>(data.c_str());
 			document.ParseInsitu(const_cast<char*>(data.data()));
 		}
-		
 		
 		
 		
@@ -84,7 +85,45 @@ namespace ComputeOnDevice
 				AppMain::wasLoaded = true;
 			}
 		});
+		
     }
+
+	void AppMain::listening()
+	{
+		WSADATA WSAData;
+
+		SOCKET server, client;
+
+		SOCKADDR_IN serverAddr, clientAddr;
+
+		WSAStartup(MAKEWORD(2, 0), &WSAData);
+		server = socket(AF_INET, SOCK_STREAM, 0);
+
+		serverAddr.sin_addr.s_addr = INADDR_ANY;
+		serverAddr.sin_family = AF_INET;
+		serverAddr.sin_port = htons(5555);
+		bind(server, (SOCKADDR*)&serverAddr, sizeof(serverAddr));
+		listen(server, 0);
+
+		while (true)
+		{
+			char buffer[1024];
+			int clientAddrSize = sizeof(clientAddr);
+			if ((client = accept(server, (SOCKADDR*)&clientAddr, &clientAddrSize)) != INVALID_SOCKET)
+			{
+				recv(client, buffer, sizeof(buffer), 0);
+				data = std::string(buffer, sizeof(buffer));
+				if (!data.empty())
+				{
+					//document.Parse<rapidjson::kParseIterativeFlag, rapidjson::kParseFullPrecisionFlag>(data.c_str());
+					document.ParseInsitu(const_cast<char*>(data.data()));
+				}
+				memset(buffer, 0, sizeof(buffer));
+
+				closesocket(client);
+			}
+		}
+	}
 
     void AppMain::OnHolographicSpaceChanged(
         Windows::Graphics::Holographic::HolographicSpace^ holographicSpace)
@@ -111,12 +150,12 @@ namespace ComputeOnDevice
         _In_ Windows::Graphics::Holographic::HolographicFrame^ holographicFrame,
         _In_ const Graphics::StepTimer& stepTimer)
     {
-		data = get_http_data("www.stud.usv.ro", "/~cpamparau/config.json");
+		/*data = get_http_data("www.stud.usv.ro", "/~cpamparau/config.json");
 		if (!data.empty())
 		{
 			//document.Parse<rapidjson::kParseIterativeFlag, rapidjson::kParseFullPrecisionFlag>(data.c_str());
 			document.ParseInsitu(const_cast<char*>(data.data()));
-		}
+		}*/
         UNREFERENCED_PARAMETER(holographicFrame);
 
         dbg::TimerGuard timerGuard(
@@ -276,7 +315,7 @@ namespace ComputeOnDevice
     // need to be released before this method returns.
     void AppMain::OnDeviceLost()
     {
-        
+		tr->join();   
         for (auto& r : _slateRendererList)
         {
             r->ReleaseDeviceDependentResources();
