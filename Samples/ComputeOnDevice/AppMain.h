@@ -66,7 +66,12 @@ namespace ComputeOnDevice
 
 		std::string data;
 		rapidjson::Document document;
-
+		std::chrono::milliseconds Tcontrast = std::chrono::milliseconds(0),
+			Tbrightness = std::chrono::milliseconds(0),
+			Tedge = std::chrono::milliseconds(0),
+			Tface = std::chrono::milliseconds(0),
+			Tcolor = std::chrono::milliseconds(0);
+		int iContrast = 0, iBrigthness = 0, iEdge = 0, iFace = 0, iColor = 0;
 
 		std::string get_http_data(const std::string& server, const std::string& file);
 

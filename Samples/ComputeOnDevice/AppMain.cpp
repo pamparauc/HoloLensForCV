@@ -18,11 +18,13 @@
 #include <locale>
 #include <codecvt>
 #include <algorithm>
+#include <chrono>
 
 using namespace cv;
 using namespace Windows::Storage;
 
 using namespace Concurrency;
+using namespace std::chrono;
 
 namespace ComputeOnDevice
 {
@@ -37,8 +39,9 @@ namespace ComputeOnDevice
         , _holoLensMediaFrameSourceGroupStarted(false)
         , _isActiveRenderer(false)
     {
-		data = get_http_data("www.stud.usv.ro", "/~cpamparau/config.json");
-		if (!data.empty())
+		//data = get_http_data("www.stud.usv.ro", "/~cpamparau/config.json");
+		data = "{\"Users\":\"Primary User\",\"Color-modification\":{\"From\":{\"R\":255,\"G\":0,\"B\":0},\"To\":{\"R\":0,\"G\":0,\"B\":255}}}";
+		if (!data.empty())\
 		{
 			//document.Parse<rapidjson::kParseIterativeFlag, rapidjson::kParseFullPrecisionFlag>(data.c_str());
 			document.ParseInsitu(const_cast<char*>(data.data()));
@@ -111,12 +114,12 @@ namespace ComputeOnDevice
         _In_ Windows::Graphics::Holographic::HolographicFrame^ holographicFrame,
         _In_ const Graphics::StepTimer& stepTimer)
     {
-		data = get_http_data("www.stud.usv.ro", "/~cpamparau/config.json");
-		if (!data.empty())
-		{
+		//data = get_http_data("www.stud.usv.ro", "/~cpamparau/config.json");
+		//if (!data.empty())
+		//{
 			//document.Parse<rapidjson::kParseIterativeFlag, rapidjson::kParseFullPrecisionFlag>(data.c_str());
-			document.ParseInsitu(const_cast<char*>(data.data()));
-		}
+			//document.ParseInsitu(const_cast<char*>(data.data()));
+		//}
         UNREFERENCED_PARAMETER(holographicFrame);
 
         dbg::TimerGuard timerGuard(
@@ -332,6 +335,7 @@ namespace ComputeOnDevice
 	void AppMain::changeColor(cv::Mat& Image, int newB, int newG, int newR, int H)
 	{
 		cv::Mat hsv;
+		auto start = high_resolution_clock::now();
 		cv::cvtColor(Image, hsv, cv::COLOR_BGR2HSV);
 		Mat mask1;
 		// Creating masks to detect the upper and lower red color.
@@ -339,10 +343,19 @@ namespace ComputeOnDevice
 		H /= 2; // S_opencv = 2.55*S_normal, V_openCV = 2.55*V_Normal
 		inRange(hsv, Scalar(H>10?H-10:H, 100, 100), Scalar(H+10, 255, 255), mask1);
 		Image.setTo(Scalar(newB, newG, newR), mask1); // to Blue
+		auto stop = high_resolution_clock::now();
+		if (iColor < 1000)
+			Tcolor += duration_cast<milliseconds>(stop - start);
+		else
+		{
+			auto resultColor = duration_cast<seconds>(Tcolor);
+		}
+		iColor++;
 	}
 
 	cv::Mat AppMain::detectEdges(cv::Mat& original, enum ComputeOnDevice::visualizeEdges type)
 	{
+		auto start = high_resolution_clock::now();
 		cv::Mat canny;
 		cv::Mat blurred;
 		cv::medianBlur(
@@ -401,18 +414,27 @@ namespace ComputeOnDevice
 						}
 						else
 						{
-							*(blurred.ptr<uint32_t>(y, x)) = 0x00ff00; // green background  
+							*(blurred.ptr<uint32_t>(y, x)) = 0xff0000; // red background  
 						}
 					}
 				}
 				break;
 			}
 		}
+		auto stop = high_resolution_clock::now();
+		if (iEdge < 1000)
+			Tedge += duration_cast<milliseconds>(stop - start);
+		else
+		{
+			auto resultEdge = duration_cast<seconds>(Tedge);
+		}
+		iEdge++;
 		return blurred;
 	}
 
 	cv::Mat AppMain::detectFaces(cv::Mat frameOpenCVHaar)
 	{
+		auto start = high_resolution_clock::now();
 		std::vector<Rect> faces;
 		Mat gray;
 		cvtColor(frameOpenCVHaar, gray, COLOR_BGR2GRAY);
@@ -427,6 +449,14 @@ namespace ComputeOnDevice
 				rectangle(frameOpenCVHaar, cvPoint(r.x, r.y), cvPoint(r.x + r.width, r.y + r.height), color);
 			}
 		}
+		auto stop = high_resolution_clock::now();
+		if (iFace < 1000)
+			Tface += duration_cast<milliseconds>(stop - start);
+		else
+		{
+			auto resultFace = duration_cast<seconds>(Tface);
+		}
+		iFace++;
 		return frameOpenCVHaar;
 	}
 
@@ -435,8 +465,17 @@ namespace ComputeOnDevice
 		cv::Mat output;
 		// value < 1 => decrease contrast
 		// value > 1 => increase contrast
+		auto start = high_resolution_clock::now();
 		input.convertTo(output, -1, value, 0);
-		
+		auto stop = high_resolution_clock::now();
+		if(iContrast < 1000)
+			Tcontrast += duration_cast<milliseconds>(stop - start);
+		else
+		{
+			auto resultContrast = duration_cast<seconds>(Tcontrast);
+			int x;
+		}
+		iContrast++;
 		return output;
 	}
 
@@ -445,7 +484,16 @@ namespace ComputeOnDevice
 		cv::Mat output;
 		// value > 0 => increase brigthness
 		// value < 0 => decrease brigthness
+		auto start = high_resolution_clock::now();
 		input.convertTo(output, -1, 1, value);
+		auto stop = high_resolution_clock::now();
+		if (iBrigthness < 1000)
+			Tbrightness += duration_cast<milliseconds>(stop - start);
+		else
+		{
+			auto resultBrightness = duration_cast<seconds>(Tbrightness);
+		}
+		iBrigthness++;
 		return output;
 	}
 
