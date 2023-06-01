@@ -689,15 +689,4 @@ namespace ComputeOnDevice
 			return document["Color-modification"]["To"][color.c_str()].GetInt();
 	}
 
-	void AppMain::permissions() {
-
-	}
-
-	void AppMain::InitializeRecognizer() {
-
-	}
-
-	void AppMain::Listen(){
-
-	}
 }
