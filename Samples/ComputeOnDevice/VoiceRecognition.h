@@ -29,7 +29,7 @@ public:
     // Resets the speech recognizer, if one exists.
     Concurrency::task<void> StopCurrentRecognizerIfExists();
 
-    void UpdateListening(std::string& data);
+    void UpdateListening(std::string* data);
 
 private:
     // Event registration tokens.

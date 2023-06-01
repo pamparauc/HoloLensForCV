@@ -13,7 +13,8 @@ using namespace Windows::UI::Input::Spatial;
 using namespace std::placeholders;
 
 VoiceRecognition::VoiceRecognition() {
-
+    // Initialize the map of speech commands to actions - in this case, color values.
+    InitializeSpeechCommandList();
 }
 
 void VoiceRecognition::InitializeSpeechCommandList()
@@ -158,7 +159,7 @@ task<bool> VoiceRecognition::StartRecognizeSpeechCommands()
         });
 }
 
-void VoiceRecognition::UpdateListening(std::string& data) {
+void VoiceRecognition::UpdateListening(std::string* data) {
     // Check for new speech input since the last frame.
     if (m_lastCommand != nullptr)
     {
@@ -176,8 +177,10 @@ void VoiceRecognition::UpdateListening(std::string& data) {
             {
                 // If so, we can set the cube to the color that was spoken.
                 //m_spinningCubeRenderer->SetColor(iter->Value);
-                data = "";
-                break;
+                if (lastCommandString.data() == L"white") {
+                    *data = "{\"Users\":\"Primary User\",\"Edge - enhancement\":\"Highlight Edges\"}";
+                    break;
+                }
             }
         }
     }

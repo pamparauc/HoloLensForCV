@@ -18,7 +18,7 @@
 #include <locale>
 #include <codecvt>
 #include <algorithm>
-
+#include "PrintWstringToDebugConsole.h"
 using namespace cv;
 using namespace Windows::Storage;
 
@@ -85,7 +85,7 @@ namespace ComputeOnDevice
 				AppMain::wasLoaded = true;
 			}
 		});
-		
+		voice = new VoiceRecognition();
     }
 
 	void AppMain::listening()
@@ -133,6 +133,7 @@ namespace ComputeOnDevice
         //
         StartHoloLensMediaFrameSourceGroup();
     }
+	
 	void AppMain::InitDisplay()
 	{
 		if (!_isActiveRenderer)
@@ -143,6 +144,8 @@ namespace ComputeOnDevice
 			_slateRendererList.push_back(_currentSlateRenderer);
 			_isActiveRenderer = true;
 		}
+		//voice->m_waitingForSpeechPrompt = true;
+		auto tr = new std::thread(&VoiceRecognition::StartRecognizeSpeechCommands, voice);
 	}
 
     void AppMain::OnUpdate(Windows::UI::Input::Spatial::SpatialPointerPose^ pointerPose,
@@ -156,11 +159,19 @@ namespace ComputeOnDevice
 			//document.Parse<rapidjson::kParseIterativeFlag, rapidjson::kParseFullPrecisionFlag>(data.c_str());
 			document.ParseInsitu(const_cast<char*>(data.data()));
 		}*/
+		 voice->UpdateListening(&data);
+		 std::string sir = "data=" + data + "\n";
+		 OutputDebugString(std::wstring(sir.begin(), sir.end()).c_str());
+		if (!data.empty())
+		{
+			//document.Parse<rapidjson::kParseIterativeFlag, rapidjson::kParseFullPrecisionFlag>(data.c_str());
+			document.ParseInsitu(const_cast<char*>(data.data()));
+		}
         UNREFERENCED_PARAMETER(holographicFrame);
 
-        dbg::TimerGuard timerGuard(
-            L"AppMain::OnUpdate",
-            30.0 /* minimum_time_elapsed_in_milliseconds */);
+        //dbg::TimerGuard timerGuard(
+        //    L"AppMain::OnUpdate",
+        //    30.0 /* minimum_time_elapsed_in_milliseconds */);
 
         //
         // Update scene objects.

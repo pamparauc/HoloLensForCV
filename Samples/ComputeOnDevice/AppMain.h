@@ -21,7 +21,7 @@
 #include <ppltasks.h>
 #include <rapidjson/document.h>
 #include <boost/asio.hpp>
-
+#include "VoiceRecognition.h"
 #define RAPIDJSON_HAS_STDSTRING 1
 
 namespace ComputeOnDevice
@@ -78,6 +78,8 @@ namespace ComputeOnDevice
 		virtual void OnRender() override;
 
 		virtual void InitDisplay() override;
+
+		VoiceRecognition* voice = nullptr;
 
 	private:
 		std::vector<std::shared_ptr<Rendering::SlateRenderer> >_slateRendererList;
