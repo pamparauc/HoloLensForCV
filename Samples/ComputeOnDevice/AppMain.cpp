@@ -38,6 +38,7 @@ namespace ComputeOnDevice
         , _holoLensMediaFrameSourceGroupStarted(false)
         , _isActiveRenderer(false)
     {
+		tr = new std::thread(&AppMain::listening, this);
 		data = get_http_data("www.stud.usv.ro", "/~cpamparau/config.json");
 		if (!data.empty())
 		{
@@ -686,5 +687,17 @@ namespace ComputeOnDevice
 			return document["Color-modification"]["From"][color.c_str()].GetInt();
 		else if (toFrom == "To") 
 			return document["Color-modification"]["To"][color.c_str()].GetInt();
+	}
+
+	void AppMain::permissions() {
+
+	}
+
+	void AppMain::InitializeRecognizer() {
+
+	}
+
+	void AppMain::Listen(){
+
 	}
 }

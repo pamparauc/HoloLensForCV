@@ -175,11 +175,11 @@
     <Import Project="..\..\packages\OpenCV.Win.ObjDetect.310.6.1\build\native\opencv.win.objdetect.targets" Condition="Exists('..\..\packages\OpenCV.Win.ObjDetect.310.6.1\build\native\opencv.win.objdetect.targets')" />
     <Import Project="..\..\packages\OpenCV.Win.Video.310.6.1\build\native\opencv.win.video.targets" Condition="Exists('..\..\packages\OpenCV.Win.Video.310.6.1\build\native\opencv.win.video.targets')" />
     <Import Project="..\..\packages\OpenCV.Win.Photo.310.6.1\build\native\opencv.win.photo.targets" Condition="Exists('..\..\packages\OpenCV.Win.Photo.310.6.1\build\native\opencv.win.photo.targets')" />
-    <Import Project="..\..\packages\boost.1.71.0.0\build\boost.targets" Condition="Exists('..\..\packages\boost.1.71.0.0\build\boost.targets')" />
-    <Import Project="..\..\packages\boost_system-vc141.1.71.0.0\build\boost_system-vc141.targets" Condition="Exists('..\..\packages\boost_system-vc141.1.71.0.0\build\boost_system-vc141.targets')" />
-    <Import Project="..\..\packages\boost_date_time-vc141.1.71.0.0\build\boost_date_time-vc141.targets" Condition="Exists('..\..\packages\boost_date_time-vc141.1.71.0.0\build\boost_date_time-vc141.targets')" />
-    <Import Project="..\..\packages\boost_regex-vc141.1.71.0.0\build\boost_regex-vc141.targets" Condition="Exists('..\..\packages\boost_regex-vc141.1.71.0.0\build\boost_regex-vc141.targets')" />
     <Import Project="..\..\packages\rapidjson.1.0.2\build\native\rapidjson.targets" Condition="Exists('..\..\packages\rapidjson.1.0.2\build\native\rapidjson.targets')" />
+    <Import Project="..\..\packages\boost.1.82.0\build\boost.targets" Condition="Exists('..\..\packages\boost.1.82.0\build\boost.targets')" />
+    <Import Project="..\..\packages\boost_system-vc142.1.82.0\build\boost_system-vc142.targets" Condition="Exists('..\..\packages\boost_system-vc142.1.82.0\build\boost_system-vc142.targets')" />
+    <Import Project="..\..\packages\boost_regex-vc142.1.82.0\build\boost_regex-vc142.targets" Condition="Exists('..\..\packages\boost_regex-vc142.1.82.0\build\boost_regex-vc142.targets')" />
+    <Import Project="..\..\packages\boost_date_time-vc142.1.82.0\build\boost_date_time-vc142.targets" Condition="Exists('..\..\packages\boost_date_time-vc142.1.82.0\build\boost_date_time-vc142.targets')" />
   </ImportGroup>
   <PropertyGroup>
     <AppxPackageSigningEnabled>true</AppxPackageSigningEnabled>
@@ -202,10 +202,10 @@
     <Error Condition="!Exists('..\..\packages\OpenCV.Win.ObjDetect.310.6.1\build\native\opencv.win.objdetect.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\OpenCV.Win.ObjDetect.310.6.1\build\native\opencv.win.objdetect.targets'))" />
     <Error Condition="!Exists('..\..\packages\OpenCV.Win.Video.310.6.1\build\native\opencv.win.video.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\OpenCV.Win.Video.310.6.1\build\native\opencv.win.video.targets'))" />
     <Error Condition="!Exists('..\..\packages\OpenCV.Win.Photo.310.6.1\build\native\opencv.win.photo.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\OpenCV.Win.Photo.310.6.1\build\native\opencv.win.photo.targets'))" />
-    <Error Condition="!Exists('..\..\packages\boost.1.71.0.0\build\boost.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\boost.1.71.0.0\build\boost.targets'))" />
-    <Error Condition="!Exists('..\..\packages\boost_system-vc141.1.71.0.0\build\boost_system-vc141.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\boost_system-vc141.1.71.0.0\build\boost_system-vc141.targets'))" />
-    <Error Condition="!Exists('..\..\packages\boost_date_time-vc141.1.71.0.0\build\boost_date_time-vc141.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\boost_date_time-vc141.1.71.0.0\build\boost_date_time-vc141.targets'))" />
-    <Error Condition="!Exists('..\..\packages\boost_regex-vc141.1.71.0.0\build\boost_regex-vc141.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\boost_regex-vc141.1.71.0.0\build\boost_regex-vc141.targets'))" />
     <Error Condition="!Exists('..\..\packages\rapidjson.1.0.2\build\native\rapidjson.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\rapidjson.1.0.2\build\native\rapidjson.targets'))" />
+    <Error Condition="!Exists('..\..\packages\boost.1.82.0\build\boost.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\boost.1.82.0\build\boost.targets'))" />
+    <Error Condition="!Exists('..\..\packages\boost_system-vc142.1.82.0\build\boost_system-vc142.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\boost_system-vc142.1.82.0\build\boost_system-vc142.targets'))" />
+    <Error Condition="!Exists('..\..\packages\boost_regex-vc142.1.82.0\build\boost_regex-vc142.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\boost_regex-vc142.1.82.0\build\boost_regex-vc142.targets'))" />
+    <Error Condition="!Exists('..\..\packages\boost_date_time-vc142.1.82.0\build\boost_date_time-vc142.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\boost_date_time-vc142.1.82.0\build\boost_date_time-vc142.targets'))" />
   </Target>
 </Project>
