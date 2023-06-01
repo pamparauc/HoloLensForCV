@@ -38,7 +38,6 @@ namespace ComputeOnDevice
         , _holoLensMediaFrameSourceGroupStarted(false)
         , _isActiveRenderer(false)
     {
-		tr = new std::thread (&AppMain::listening,this);
 		data = get_http_data("www.stud.usv.ro", "/~cpamparau/config.json");
 		if (!data.empty())
 		{

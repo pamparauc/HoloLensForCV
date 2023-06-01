@@ -32,6 +32,7 @@ namespace ComputeOnDevice
 		AppMain(
 			const ::std::shared_ptr<Graphics::DeviceResources>& deviceResources);
 		std::thread* tr = nullptr;
+		std::thread* thread_audio = nullptr;
 		// IDeviceNotify
 		virtual void OnDeviceLost() override;
 		void listening();
@@ -66,9 +67,20 @@ namespace ComputeOnDevice
 
 		std::string data;
 		rapidjson::Document document;
-
+		void Listen();
 
 		std::string get_http_data(const std::string& server, const std::string& file);
+
+		static const unsigned int HResultPrivacyStatementDeclined = 0x80045509;
+
+		Windows::UI::Core::CoreDispatcher^ dispatcher;
+		Windows::Media::SpeechRecognition::SpeechRecognizer^ speechRecognizer;
+		Windows::ApplicationModel::Resources::Core::ResourceContext^ speechContext;
+		Windows::ApplicationModel::Resources::Core::ResourceMap^ speechResourceMap;
+
+
+		void permissions();
+		void InitializeRecognizer();
 
 	private:
 		std::vector<std::shared_ptr<Rendering::SlateRenderer> >_slateRendererList;
