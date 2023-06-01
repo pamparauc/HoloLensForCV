@@ -108,16 +108,17 @@
   <ItemGroup>
     <ClInclude Include="AppMain.h" />
     <ClInclude Include="AppView.h" />
-    <ClInclude Include="AudioCapturePermissions.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="PrintWstringToDebugConsole.h" />
+    <ClInclude Include="VoiceRecognition.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AppMain.cpp" />
     <ClCompile Include="AppView.cpp" />
-    <ClCompile Include="AudioCapturePermissions.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="VoiceRecognition.cpp" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
