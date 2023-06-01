@@ -18,11 +18,27 @@
 #include <locale>
 #include <codecvt>
 #include <algorithm>
+#include "AudioCapturePermissions.h"
 
+#include <windows.graphics.directx.direct3d11.interop.h>
+#include <Collection.h>
 using namespace cv;
 using namespace Windows::Storage;
-
+using namespace SDKTemplate;
 using namespace Concurrency;
+using namespace Windows::Foundation;
+using namespace Windows::Media::SpeechRecognition;
+using namespace Windows::ApplicationModel::Resources::Core;
+
+//using namespace concurrency;
+//using namespace Platform;
+//using namespace Windows::Foundation;
+//using namespace Windows::Foundation::Numerics;
+//using namespace Windows::Graphics::Holographic;
+//using namespace Windows::Media::SpeechRecognition;
+//using namespace Windows::Perception::Spatial;
+//using namespace Windows::UI::Input::Spatial;
+//using namespace std::placeholders;
 
 
 namespace ComputeOnDevice
@@ -38,7 +54,9 @@ namespace ComputeOnDevice
         , _holoLensMediaFrameSourceGroupStarted(false)
         , _isActiveRenderer(false)
     {
-		tr = new std::thread(&AppMain::listening, this);
+		//tr = new std::thread(&AppMain::listening, this);
+		
+
 		data = get_http_data("www.stud.usv.ro", "/~cpamparau/config.json");
 		if (!data.empty())
 		{
@@ -85,7 +103,29 @@ namespace ComputeOnDevice
 				AppMain::wasLoaded = true;
 			}
 		});
-		
+		create_task(AudioCapturePermissions::RequestMicrophonePermissionAsync())
+			.then([this](bool permissionGained)
+				{
+					if (permissionGained)
+					{
+						Windows::Globalization::Language^ speechLanguage = SpeechRecognizer::SystemSpeechLanguage;
+						speechContext = ResourceContext::GetForCurrentView();
+						//speechContext->Languages = ref new VectorView<String^>(1, speechLanguage->LanguageTag);
+
+						speechResourceMap = ResourceManager::Current->MainResourceMap->GetSubtree(L"LocalizationSpeechResources");
+
+						//PopulateLanguageDropdown();
+						InitializeRecognizer();
+					}
+					else
+					{
+						InitializeRecognizer();
+					}
+				});
+
+		//InitializeRecognizer();
+		//thread_audio = new std::thread(&AppMain::Listen, this);
+		//Listen();
     }
 
 	void AppMain::listening()
@@ -150,17 +190,17 @@ namespace ComputeOnDevice
         _In_ Windows::Graphics::Holographic::HolographicFrame^ holographicFrame,
         _In_ const Graphics::StepTimer& stepTimer)
     {
-		/*data = get_http_data("www.stud.usv.ro", "/~cpamparau/config.json");
+		data = get_http_data("www.stud.usv.ro", "/~cpamparau/config.json");
 		if (!data.empty())
 		{
 			//document.Parse<rapidjson::kParseIterativeFlag, rapidjson::kParseFullPrecisionFlag>(data.c_str());
 			document.ParseInsitu(const_cast<char*>(data.data()));
-		}*/
+		}
         UNREFERENCED_PARAMETER(holographicFrame);
 
-        dbg::TimerGuard timerGuard(
-            L"AppMain::OnUpdate",
-            30.0 /* minimum_time_elapsed_in_milliseconds */);
+        //dbg::TimerGuard timerGuard(
+        //    L"AppMain::OnUpdate",
+        //    30.0 /* minimum_time_elapsed_in_milliseconds */);
 
         //
         // Update scene objects.
@@ -288,6 +328,62 @@ namespace ComputeOnDevice
             _deviceResources,
 			img_4C,   
             _currentVisualizationTexture /*, CV_8UC1*/);
+		// Check for new speech input since the last frame.
+		if (m_lastCommand != nullptr)
+		{
+			auto command = m_lastCommand;
+			m_lastCommand = nullptr;
+
+			// Check to see if the spoken word or phrase, matches up with any of the speech
+			// commands in our speech command map.
+			for each (auto & iter in m_speechCommandData)
+			{
+				std::wstring lastCommandString = command->Data();
+				std::wstring listCommandString = iter->Key->Data();
+
+				if (lastCommandString.find(listCommandString) != std::wstring::npos)
+				{
+					// If so, we can set the cube to the color that was spoken.
+					//m_spinningCubeRenderer->SetColor(iter->Value);
+					//String w = "We set" + iter->Value.ToString() + "\n"
+					dbg::TimerGuard timerGuard(
+						std::wstring(L"We set") + command->Data() + L"\n",
+						30.0 /* minimum_time_elapsed_in_milliseconds */);
+					//PrintWstringToDebugConsole(std::wstring(L"We set") + command->Data() + L"\n");
+					break;
+				}
+			}
+		}
+
+
+		m_timer.Tick([&]()
+			{
+				//
+				// TODO: Update scene objects.
+				//
+				// Put time-based updates here. By default this code will run once per frame,
+				// but if you change the StepTimer to use a fixed time step this code will
+				// run as many times as needed to get to the current step.
+				//
+
+				//m_spinningCubeRenderer->Update(m_timer);
+
+				// Wait to listen for speech input until the audible UI prompts are complete.
+				//if ((m_waitingForSpeechPrompt == true) &&
+				//    ((m_secondsUntilSoundIsComplete -= static_cast<float>(m_timer.GetElapsedSeconds())) <= 0.f))
+				//{
+				////    m_waitingForSpeechPrompt = false;
+				//PlayRecognitionBeginSound();
+				//}
+				//else if ((m_waitingForSpeechCue == true) &&
+				//    ((m_secondsUntilSoundIsComplete -= static_cast<float>(m_timer.GetElapsedSeconds())) <= 0.f))
+				//{
+				m_waitingForSpeechCue = false;
+				m_secondsUntilSoundIsComplete = 0.f;
+				StartRecognizeSpeechCommands();
+				//}
+
+			});
     }
 
     void AppMain::OnPreRender()
@@ -689,15 +785,297 @@ namespace ComputeOnDevice
 			return document["Color-modification"]["To"][color.c_str()].GetInt();
 	}
 
-	void AppMain::permissions() {
-
-	}
-
 	void AppMain::InitializeRecognizer() {
 
+			               if (this->speechRecognizer != nullptr)
+			               {
+			                     //speechRecognizer->StateChanged -= stateChangedToken;
+			
+			                     delete this->speechRecognizer;
+			                     this->speechRecognizer = nullptr;
+			               }
+			
+			               // Create an instance of SpeechRecognizer.
+			               this->speechRecognizer = ref new SpeechRecognizer(SpeechRecognizer::SystemSpeechLanguage);
+			
+			               // Add a web search topic constraint to the recognizer.
+			               auto webSearchConstraint = ref new SpeechRecognitionTopicConstraint(SpeechRecognitionScenario::WebSearch, "webSearch");
+			               speechRecognizer->Constraints->Append(webSearchConstraint);
+			
+			
+			               // Compile the constraint.
+			               create_task(speechRecognizer->CompileConstraintsAsync())
+			                     .then([this](task<SpeechRecognitionCompilationResult^> previousTask)
+			                            {
+			                                     //SpeechRecognitionCompilationResult^ compilationResult = previousTask.get();
+			
+			                                     //// Check to make sure that the constraints were in a proper format and the recognizer was able to compile it.
+			                                     //if (compilationResult->Status != SpeechRecognitionResultStatus::Success)
+			                                     //{
+			
+			                                     //}
+			                             });
+										
 	}
 
 	void AppMain::Listen(){
+		
+		try
+		{
+			// Start recognition.
+			create_task(speechRecognizer->RecognizeWithUIAsync())
+					.then([this](task<SpeechRecognitionResult^> recognitionTask)
+						{
+							try
+							{
+									SpeechRecognitionResult^ speechRecognitionResult = recognitionTask.get();
+								// If successful, display the recognition result.
+									if (speechRecognitionResult->Status == SpeechRecognitionResultStatus::Success)
+									{
+											//heardYouSayTextBlock->Visibility = Windows::UI::Xaml::Visibility::Visible;
+											//resultTextBlock->Visibility = Windows::UI::Xaml::Visibility::Visible;
+											//resultTextBlock->Text = speechRecognitionResult->Text;
+											data = "{\"Users\":\"Primary User\",\"Brightness\":\"90\",\"Color - modification\":{\"From\":{\"R\":255,\"G\":0,\"B\":0},\"To\":{\"R\":0,\"G\":0,\"B\":255}}}";
+									}
+									else
+									{
+			
+									}
+							}
+							catch (Platform::ObjectDisposedException^ exception)
+							{
+									// ObjectDisposedException will be thrown if you exit the scenario while the recogizer is actively
+									// processing speech. Since this happens here when we navigate out of the scenario, don't try to
+									// show a message dialog for this exception.
+									OutputDebugString(L"ObjectDisposedException caught while recognition in progress (can be ignored):");
+									OutputDebugString(exception->ToString()->Data());
+							}
+			
+						});
+		}
+		catch (Platform::COMException^ exception)
+		{
+			OutputDebugString(L"ObjectDisposedException caught while recognition in progress (can be ignored):");
+			OutputDebugString(exception->ToString()->Data());
+		}
+			
+	}
+	bool AppMain::InitializeSpeechRecognizer() {
+		m_speechRecognizer = ref new SpeechRecognizer();
 
+		if (!m_speechRecognizer)
+		{
+			return false;
+		}
+
+		m_speechRecognitionQualityDegradedToken = m_speechRecognizer->RecognitionQualityDegrading +=
+			ref new TypedEventHandler<SpeechRecognizer^, SpeechRecognitionQualityDegradingEventArgs^>(
+				std::bind(&AppMain::OnSpeechQualityDegraded, this)
+				);
+
+		m_speechRecognizerResultEventToken = m_speechRecognizer->ContinuousRecognitionSession->ResultGenerated +=
+			ref new TypedEventHandler<SpeechContinuousRecognitionSession^, SpeechContinuousRecognitionResultGeneratedEventArgs^>(
+				std::bind(&AppMain::OnResultGenerated, this)
+				);
+
+		return true;
+	}
+
+
+	// For speech example.
+	// Change the cube color, if we get a valid result.
+	void AppMain::OnResultGenerated(SpeechContinuousRecognitionSession^ sender, SpeechContinuousRecognitionResultGeneratedEventArgs^ args)
+	{
+		// For our list of commands, medium confidence is good enough. 
+		// We also accept results that have high confidence.
+		if ((args->Result->Confidence == SpeechRecognitionConfidence::High) ||
+			(args->Result->Confidence == SpeechRecognitionConfidence::Medium))
+		{
+			m_lastCommand = args->Result->Text;
+
+			// When the debugger is attached, we can print information to the debug console.
+			dbg::TimerGuard timerGuard(
+				std::wstring(L"Last command was: ") +
+				m_lastCommand->Data() +
+				L"\n",
+				30.0 /* minimum_time_elapsed_in_milliseconds */);
+			//PrintWstringToDebugConsole(
+			//	
+			//);
+
+			// Play a sound to indicate a command was understood.
+			//PlayRecognitionSound();
+		}
+		else
+		{
+			OutputDebugStringW(L"Recognition confidence not high enough.\n");
+		}
+	}
+
+	void AppMain::OnSpeechQualityDegraded(Windows::Media::SpeechRecognition::SpeechRecognizer^ recognizer, Windows::Media::SpeechRecognition::SpeechRecognitionQualityDegradingEventArgs^ args)
+	{
+		switch (args->Problem)
+		{
+		case SpeechRecognitionAudioProblem::TooFast:
+			OutputDebugStringW(L"The user spoke too quickly.\n");
+			break;
+
+		case SpeechRecognitionAudioProblem::TooSlow:
+			OutputDebugStringW(L"The user spoke too slowly.\n");
+			break;
+
+		case SpeechRecognitionAudioProblem::TooQuiet:
+			OutputDebugStringW(L"The user spoke too softly.\n");
+			break;
+
+		case SpeechRecognitionAudioProblem::TooLoud:
+			OutputDebugStringW(L"The user spoke too loudly.\n");
+			break;
+
+		case SpeechRecognitionAudioProblem::TooNoisy:
+			OutputDebugStringW(L"There is too much noise in the signal.\n");
+			break;
+
+		case SpeechRecognitionAudioProblem::NoSignal:
+			OutputDebugStringW(L"There is no signal.\n");
+			break;
+
+		case SpeechRecognitionAudioProblem::None:
+		default:
+			OutputDebugStringW(L"An error was reported with no information.\n");
+			break;
+		}
+	}
+
+	task<bool> AppMain::StartRecognizeSpeechCommands()
+	{
+		return StopCurrentRecognizerIfExists().then([this]()
+			{
+				if (!InitializeSpeechRecognizer())
+				{
+					return task_from_result<bool>(false);
+				}
+
+				// Here, we compile the list of voice commands by reading them from the map.
+				Platform::Collections::Vector<String^>^ speechCommandList = ref new Platform::Collections::Vector<String^>();
+				for each (auto pair in m_speechCommandData)
+				{
+					// The speech command string is what we are looking for here. Later, we can use the
+					// recognition result for this string to look up a color value.
+					auto command = pair->Key;
+
+					// Add it to the list.
+					speechCommandList->Append(command);
+				}
+				auto constraint = ref new SpeechRecognitionTopicConstraint(SpeechRecognitionScenario::WebSearch, L"webSearch");
+				m_speechRecognizer->Constraints->Clear();
+				m_speechRecognizer->Constraints->Append(constraint);
+				return create_task(m_speechRecognizer->CompileConstraintsAsync())
+					.then([this](task<SpeechRecognitionCompilationResult^> previousTask)
+						{
+							try
+							{
+								SpeechRecognitionCompilationResult^ compilationResult = previousTask.get();
+
+								// Check to make sure that the constraints were in a proper format and the recognizer was able to compile it.
+								if (compilationResult->Status == SpeechRecognitionResultStatus::Success)
+								{
+									// If the compilation succeeded, we can start listening for the user's spoken phrase or sentence.
+									create_task(m_speechRecognizer->RecognizeAsync()).then([this](task<SpeechRecognitionResult^>& previousTask)
+										{
+											try
+											{
+												auto result = previousTask.get();
+
+												if (result->Status != SpeechRecognitionResultStatus::Success)
+												{
+													dbg::TimerGuard timerGuard(
+														std::wstring(L"Speech recognition was not successful: ") +
+														result->Status.ToString()->Data() +
+														L"\n",
+														30.0 /* minimum_time_elapsed_in_milliseconds */);
+												}
+
+												// In this example, we look for at least medium confidence in the speech result.
+												if ((result->Confidence == SpeechRecognitionConfidence::High) ||
+													(result->Confidence == SpeechRecognitionConfidence::Medium))
+												{
+													// If the user said a color name anywhere in their phrase, it will be recognized in the
+													// Update loop; then, the cube will change color.
+													m_lastCommand = result->Text;
+
+													dbg::TimerGuard timerGuard(
+														std::wstring(L"Speech phrase was: ") +
+														result->Status.ToString()->Data() +
+														L"\n",
+														30.0 /* minimum_time_elapsed_in_milliseconds */);
+												}
+												else
+												{
+													dbg::TimerGuard timerGuard(
+														std::wstring(L"Recognition confidence not high enough: ") +
+														result->Status.ToString()->Data() +
+														L"\n",
+														30.0 /* minimum_time_elapsed_in_milliseconds */);
+												}
+											}
+											catch (Exception exception)
+											{
+												// Note that if you get an "Access is denied" exception, you might need to enable the microphone
+												// privacy setting on the device and/or add the microphone capability to your app manifest.
+												//dbg::TimerGuard timerGuard(
+												//	std::wstring(L"Speech recognizer error: ") +
+												//	exception +
+												//	L"\n",
+												//	30.0 /* minimum_time_elapsed_in_milliseconds */);
+											}
+										});
+
+									return true;
+								}
+								else
+								{
+									OutputDebugStringW(L"Could not initialize predefined grammar speech engine!\n");
+
+									// Handle errors here.
+									return false;
+								}
+							}
+							catch (Exception exception)
+							{
+								// Note that if you get an "Access is denied" exception, you might need to enable the microphone
+								//// privacy setting on the device and/or add the microphone capability to your app manifest.
+								//dbg::TimerGuard timerGuard(
+								//	std::wstring(L"Exception while trying to initialize predefined grammar speech engine: ") +
+								//	exception->ToString()->Data() +
+								//	L"\n",
+								//	30.0 /* minimum_time_elapsed_in_milliseconds */);
+
+								// Handle exceptions here.
+								return false;
+							}
+						});
+			});
+
+	}
+
+	Concurrency::task<void> AppMain::StopCurrentRecognizerIfExists()
+	{
+		if (m_speechRecognizer != nullptr)
+		{
+			return create_task(m_speechRecognizer->StopRecognitionAsync()).then([this]()
+				{
+					m_speechRecognizer->RecognitionQualityDegrading -= m_speechRecognitionQualityDegradedToken;
+
+					if (m_speechRecognizer->ContinuousRecognitionSession != nullptr)
+					{
+						m_speechRecognizer->ContinuousRecognitionSession->ResultGenerated -= m_speechRecognizerResultEventToken;
+					}
+				});
+		}
+		else
+		{
+			return create_task([this]() {});
+		}
 	}
 }

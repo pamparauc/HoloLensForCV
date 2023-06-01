@@ -109,6 +109,7 @@
     <ClInclude Include="AppMain.h" />
     <ClInclude Include="AppView.h" />
     <ClInclude Include="AudioCapturePermissions.h" />
+    <ClInclude Include="Common\StepTimer.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>

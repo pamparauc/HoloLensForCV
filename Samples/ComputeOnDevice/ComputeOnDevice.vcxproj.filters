@@ -38,6 +38,7 @@
     <ClInclude Include="AppView.h" />
     <ClInclude Include="AppMain.h" />
     <ClInclude Include="AudioCapturePermissions.h" />
+    <ClInclude Include="Common\StepTimer.h" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest" />
