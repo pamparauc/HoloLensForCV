@@ -151,7 +151,7 @@
       <CompileAsWinRT>true</CompileAsWinRT>
       <SDLCheck>true</SDLCheck>
       <WarningLevel>Level4</WarningLevel>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

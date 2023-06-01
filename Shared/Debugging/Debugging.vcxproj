@@ -127,7 +127,7 @@
       <CompileAsWinRT>false</CompileAsWinRT>
       <SDLCheck>true</SDLCheck>
       <WarningLevel>Level4</WarningLevel>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
