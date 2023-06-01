@@ -31,14 +31,14 @@
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="AppView.cpp" />
     <ClCompile Include="AppMain.cpp" />
-    <ClCompile Include="AudioCapturePermissions.cpp" />
+    <ClCompile Include="VoiceRecognition.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="AppView.h" />
     <ClInclude Include="AppMain.h" />
-    <ClInclude Include="AudioCapturePermissions.h" />
-    <ClInclude Include="Common\StepTimer.h" />
+    <ClInclude Include="VoiceRecognition.h" />
+    <ClInclude Include="PrintWstringToDebugConsole.h" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest" />
